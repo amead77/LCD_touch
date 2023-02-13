@@ -90,7 +90,7 @@ typedef struct s_boxdef {
 
 s_boxdef boxno[6] = {{1,1,150, 21}, {1,26,150, 46}, {1,51,150, 71}, {1,76,150, 96}, {1,101,150, 121}, {1,126,150, 146}};
 String boxmsg[6] = {"TEST 01", "TEST 02", "TEST 03", "TEST 04", "TEST 05", "TEST 06"};
-s_boxdef timeplace = {1,1,320,25};
+s_boxdef timeplace = {1,1,319,29};
 
 int debounce = 0;
 int lastpressed = -1;
@@ -193,30 +193,35 @@ void displaytime(String sTime) {
 	int ex = timeplace.endx;
 	int ey = timeplace.endy;
 //	int msglen = msgstr.length() * 13;
-	mylcd.Set_Text_Back_colour(BLACK);
-    mylcd.Set_Draw_color(YELLOW);
+
+//	mylcd.Set_Text_Back_colour(BLACK);
+//    mylcd.Set_Draw_color(YELLOW);
 //	mylcd.Draw_Rectangle(0,0,100,40);  	
 //	mylcd.Draw_Rectangle(sx,sy,ex,ey);  	
     mylcd.Set_Draw_color(BLACK);
 	mylcd.Fill_Rectangle(sx,sy,ex,ey);  	
     mylcd.Set_Draw_color(YELLOW);
 	mylcd.Draw_Rectangle(sx,sy,ex,ey);  	
-	mylcd.Set_Text_Size(boxsize);
+	mylcd.Set_Text_Size(3);
 	mylcd.Set_Text_colour(YELLOW);
-	mylcd.Print_String(msgstr, sx+4, sy+3);
+	mylcd.Print_String(sTime, sx+4, sy+3);
 
 	
 }
 
 void get_ser_data() {
 	int iData = 0;
-	String sData = "#";
+	String sData = "";
 	
-	iData = Serial.read();
-	if ((iData != 10) && (iData != 13)) {
-		sData = char(iData+48);  //String(iData+48);
-		printboxed(sData, 1, 1);
+	while (Serial.available() > 0) {
+		iData = Serial.read();
+		if ((iData != 10) && (iData != 13)) {
+			sData += char(iData);  //String(iData+48);
+		} else {
+			break;
+		}
 	}
+	displaytime(sData);
 }
 
 void loop() {
