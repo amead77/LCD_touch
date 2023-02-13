@@ -114,7 +114,7 @@ def ExitProgram(ExitString):
     exit(0)
 
 def listports():
-    for info in sorted(comports(include_links=True)):
+    for info in sorted(comports()):
         print("{0}: {0.subsystem}".format(info))
 
 def main():
@@ -125,7 +125,7 @@ def main():
     parser.add_argument('-p', '--port', action='store', help='port location', default='')
     args = parser.parse_args()
     if args.port=='': ExitProgram('no port given, use --port')
-    
+    print(f'PORT: {args.port}')
 
 
 
