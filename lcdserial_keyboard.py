@@ -4,6 +4,7 @@ import io
 from datetime import datetime
 
 #next section for listing ports borrowed from the examples.
+#
 # This file is part of pySerial. https://github.com/pyserial/pyserial
 # (C) 2011-2015 Chris Liechti <cliechti@gmx.net>
 #
@@ -18,6 +19,7 @@ from serial.tools import list_ports_common
 import argparse #used for argparser
 
 global sPort
+global lPortlist
 
 class SysFS(list_ports_common.ListPortInfo):
     """Wrapper for easy sysfs access and device info"""
@@ -114,13 +116,19 @@ def ExitProgram(ExitString):
     exit(0)
 
 def listports():
+    global lPortlist
     for info in sorted(comports()):
-        print("{0}: {0.subsystem}".format(info))
+        #print("{0}: {0.subsystem}".format(info))
+        sTstr = "{0}".format(info)
+        lPortlist.append(sTstr.split()[0])
 
 def main():
-    print("available ports\n")
+    global lPortlist
+    lPortlist = []
+    print("available ports below:\n")
     listports()
-
+    for iIter in range(len(lPortlist)):
+        print(lPortlist[iIter])
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--port', action='store', help='port location', default='')
     args = parser.parse_args()
