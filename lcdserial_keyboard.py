@@ -2,141 +2,83 @@
 import serial
 import io
 from datetime import datetime
-
-#next section for listing ports borrowed from the examples.
-#
-# This file is part of pySerial. https://github.com/pyserial/pyserial
-# (C) 2011-2015 Chris Liechti <cliechti@gmx.net>
-#
-# SPDX-License-Identifier:    BSD-3-Clause
-
-#from __future__ import absolute_import
-
+from time import sleep
 import glob
 import os
 from sys import exit
-from serial.tools import list_ports_common
+#from serial.tools import list_ports_common
 import argparse #used for argparser
+import m_serialstuff
 
 global sPort
 global lPortlist
+global ser
 
-class SysFS(list_ports_common.ListPortInfo):
-    """Wrapper for easy sysfs access and device info"""
-
-    def __init__(self, device):
-        super(SysFS, self).__init__(device)
-        # special handling for links
-        if device is not None and os.path.islink(device):
-            device = os.path.realpath(device)
-            is_link = True
-        else:
-            is_link = False
-        self.usb_device_path = None
-        if os.path.exists('/sys/class/tty/{}/device'.format(self.name)):
-            self.device_path = os.path.realpath('/sys/class/tty/{}/device'.format(self.name))
-            self.subsystem = os.path.basename(os.path.realpath(os.path.join(self.device_path, 'subsystem')))
-        else:
-            self.device_path = None
-            self.subsystem = None
-        # check device type
-        if self.subsystem == 'usb-serial':
-            self.usb_interface_path = os.path.dirname(self.device_path)
-        elif self.subsystem == 'usb':
-            self.usb_interface_path = self.device_path
-        else:
-            self.usb_interface_path = None
-        # fill-in info for USB devices
-        if self.usb_interface_path is not None:
-            self.usb_device_path = os.path.dirname(self.usb_interface_path)
-
-            try:
-                num_if = int(self.read_line(self.usb_device_path, 'bNumInterfaces'))
-            except ValueError:
-                num_if = 1
-
-            self.vid = int(self.read_line(self.usb_device_path, 'idVendor'), 16)
-            self.pid = int(self.read_line(self.usb_device_path, 'idProduct'), 16)
-            self.serial_number = self.read_line(self.usb_device_path, 'serial')
-            if num_if > 1:  # multi interface devices like FT4232
-                self.location = os.path.basename(self.usb_interface_path)
-            else:
-                self.location = os.path.basename(self.usb_device_path)
-
-            self.manufacturer = self.read_line(self.usb_device_path, 'manufacturer')
-            self.product = self.read_line(self.usb_device_path, 'product')
-            self.interface = self.read_line(self.usb_interface_path, 'interface')
-
-        if self.subsystem in ('usb', 'usb-serial'):
-            self.apply_usb_info()
-        #~ elif self.subsystem in ('pnp', 'amba'):  # PCI based devices, raspi
-        elif self.subsystem == 'pnp':  # PCI based devices
-            self.description = self.name
-            self.hwid = self.read_line(self.device_path, 'id')
-        elif self.subsystem == 'amba':  # raspi
-            self.description = self.name
-            self.hwid = os.path.basename(self.device_path)
-
-        if is_link:
-            self.hwid += ' LINK={}'.format(device)
-
-    def read_line(self, *args):
-        """\
-        Helper function to read a single line from a file.
-        One or more parameters are allowed, they are joined with os.path.join.
-        Returns None on errors..
-        """
-        try:
-            with open(os.path.join(*args)) as f:
-                line = f.readline().strip()
-            return line
-        except IOError:
-            return None
-
-
-def comports(include_links=False):
-    devices = glob.glob('/dev/ttyS*')           # built-in serial ports
-    devices.extend(glob.glob('/dev/ttyUSB*'))   # usb-serial with own driver
-    devices.extend(glob.glob('/dev/ttyXRUSB*')) # xr-usb-serial port exar (DELL Edge 3001)
-    devices.extend(glob.glob('/dev/ttyACM*'))   # usb-serial with CDC-ACM profile
-    devices.extend(glob.glob('/dev/ttyAMA*'))   # ARM internal port (raspi)
-    devices.extend(glob.glob('/dev/rfcomm*'))   # BT serial devices
-    devices.extend(glob.glob('/dev/ttyAP*'))    # Advantech multi-port serial controllers
-    if include_links:
-        devices.extend(list_ports_common.list_links(devices))
-    return [info
-            for info in [SysFS(d) for d in devices]
-            if info.subsystem != "platform"]    # hide non-present internal serial ports
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # test
 
+###############################################################################
+# exit semi gracefully
+###############################################################################
 def ExitProgram(ExitString):
     print(ExitString)
     exit(0)
 
+
+###############################################################################
+# list available serial ports
+###############################################################################
 def listports():
     global lPortlist
-    for info in sorted(comports()):
+    for info in sorted(m_serialstuff.comports()):
         #print("{0}: {0.subsystem}".format(info))
         sTstr = "{0}".format(info)
         lPortlist.append(sTstr.split()[0])
-
-def main():
-    global lPortlist
-    lPortlist = []
-    print("available ports below:\n")
-    listports()
+    if len(lPortlist) < 1:
+        ExitProgram("\nNo ports available")
     for iIter in range(len(lPortlist)):
-        print(lPortlist[iIter])
+        print(f"{iIter}:", lPortlist[iIter])
+
+
+def get_args():
+    global sPort
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--port', action='store', help='port location', default='')
     args = parser.parse_args()
-    if args.port=='': ExitProgram('no port given, use --port')
+    if args.port=='': ExitProgram('\nno port given, use --port')
+    sPort = args.port
     print(f'PORT: {args.port}')
 
+def sendtime():
+    now = datetime.now()
+    #print("now =", now)
+    # dd/mm/YY H:M:S
+    dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+    #print("date and time =", dt_string)
+    ser.write(dt_string.encode('utf-8'))
 
 
+###############################################################################
+# main
+###############################################################################
+def main():
+    global lPortlist
+    global ser
+    global sPort
+    lPortlist = []
+    print("available ports below:")
+    listports()
+    get_args()
+
+    try:
+        ser = serial.Serial(port=sPort, baudrate=38400, bytesize=serial.EIGHTBITS, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, timeout=1)
+    except:
+        ExitProgram("error opening port")
+    #else:
+    sleep(2)    
+    sendtime()
+    ser.close()
 
 if __name__ == '__main__':
     main()
