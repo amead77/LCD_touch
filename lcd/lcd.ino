@@ -88,9 +88,9 @@ typedef struct s_boxdef {
 	int endy;
 };
 
-s_boxdef boxno[6] = {{1,1,150, 21}, {1,26,150, 46}, {1,51,150, 71}, {1,76,150, 96}, {1,101,150, 121}, {1,126,150, 146}};
+s_boxdef boxno[6] = {{1,1,319, 45}, {1,26,150, 46}, {1,51,150, 71}, {1,76,150, 96}, {1,101,150, 121}, {1,126,150, 146}};
 String boxmsg[6] = {"TEST 01", "TEST 02", "TEST 03", "TEST 04", "TEST 05", "TEST 06"};
-s_boxdef timeplace = {1,1,319,29};
+s_boxdef timeplace = {1,1,319,45};
 
 int debounce = 0;
 int lastpressed = -1;
@@ -194,7 +194,6 @@ void displaytime(String sTime) {
 	int ey = timeplace.endy;
 //	int msglen = msgstr.length() * 13;
 
-//	mylcd.Set_Text_Back_colour(BLACK);
 //    mylcd.Set_Draw_color(YELLOW);
 //	mylcd.Draw_Rectangle(0,0,100,40);  	
 //	mylcd.Draw_Rectangle(sx,sy,ex,ey);  	
@@ -202,17 +201,22 @@ void displaytime(String sTime) {
 	mylcd.Fill_Rectangle(sx,sy,ex,ey);  	
     mylcd.Set_Draw_color(YELLOW);
 	mylcd.Draw_Rectangle(sx,sy,ex,ey);  	
-	mylcd.Set_Text_Size(3);
+	mylcd.Set_Text_Size(4);
 	mylcd.Set_Text_colour(YELLOW);
-	mylcd.Print_String(sTime, sx+4, sy+3);
+	mylcd.Set_Text_Back_colour(BLACK);
+	mylcd.Print_String(sTime, sx+4+70, sy+3);
 
 	
 }
 
 void get_ser_data() {
 	int iData = 0;
+	int iButton = -1;
+	String iButtType = "A";
 	String sData = "";
-	
+	String sButton = "";
+
+
 	while (Serial.available() > 0) {
 		iData = Serial.read();
 		if ((iData != 10) && (iData != 13)) {
@@ -221,7 +225,16 @@ void get_ser_data() {
 			break;
 		}
 	}
-	displaytime(sData);
+	if (sData.length() > 3) {
+		iButton = sData.indexOf("]");
+		if (iButton > 0) {
+			iButton = sData[1];
+			iButtType = sData[2];
+			sButton = sData.substring(4);
+			displaytime(sButton);
+
+		}
+	}
 }
 
 void loop() {
@@ -234,7 +247,7 @@ void loop() {
 	}
 	if (debounce > 15) {
 		debounce=-1;
-		printboxed(boxmsg[pressed], pressed, 1);
+		//printboxed(boxmsg[pressed], pressed, 4);
 		lastpressed = -1;
 	}
 	
@@ -255,16 +268,16 @@ void loop() {
 		pressed=boxnum(p.x, p.y);
 		if (pressed != lastpressed) {
 			if (debounce > -1) {
-				printboxed(boxmsg[lastpressed], lastpressed, 1);
+				printboxed(boxmsg[lastpressed], lastpressed, 4);
 			}
 			debounce = 0;
 			lastpressed = pressed;
 			sendit = true;
 		}
 		if (sendit) {
-			printboxed(String(pressed), 5, 1);
-			printboxedhighlight(boxmsg[pressed], pressed, 1);
-			Serial.println("B"+leadingzero(pressed));
+			printboxed(String(pressed), 5, 4);
+			printboxedhighlight(boxmsg[pressed], pressed, 4);
+			Serial.println("B*"+leadingzero(pressed));
 		}
 	}
 	
