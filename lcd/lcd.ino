@@ -88,15 +88,24 @@ typedef struct s_boxdef {
 	int endy;
 };
 
-s_boxdef boxno[6] = {{1,1,319, 45}, {1,26,150, 46}, {1,51,150, 71}, {1,76,150, 96}, {1,101,150, 121}, {1,126,150, 146}};
+typedef struct s_boxdata {
+	int iboxnum;
+	String sboxdata;
+};
+
+s_boxdef boxno[6] = {{1,1,319, 45}, {1,50,150, 100}, {1,51,150, 71}, {1,76,150, 96}, {1,101,150, 121}, {1,126,150, 146}};
 String boxmsg[6] = {"TEST 01", "TEST 02", "TEST 03", "TEST 04", "TEST 05", "TEST 06"};
 s_boxdef timeplace = {1,1,319,45};
 
+s_boxdata boxdata[7];
+
+int boxcount = -1;
 int debounce = 0;
 int lastpressed = -1;
 int pressed = -1;
 bool sendit = false;
 bool firsttime = true;
+bool refresh = false;
 
 void setup() {
 	Serial.begin(38400);
@@ -187,33 +196,13 @@ int boxnum(int px, int py) {
 	return -1;
 }
 
-void displaytime(String sTime) {
-	int sx = timeplace.startx;
-	int sy = timeplace.starty;
-	int ex = timeplace.endx;
-	int ey = timeplace.endy;
-//	int msglen = msgstr.length() * 13;
-
-//    mylcd.Set_Draw_color(YELLOW);
-//	mylcd.Draw_Rectangle(0,0,100,40);  	
-//	mylcd.Draw_Rectangle(sx,sy,ex,ey);  	
-    mylcd.Set_Draw_color(BLACK);
-	mylcd.Fill_Rectangle(sx,sy,ex,ey);  	
-    mylcd.Set_Draw_color(YELLOW);
-	mylcd.Draw_Rectangle(sx,sy,ex,ey);  	
-	mylcd.Set_Text_Size(4);
-	mylcd.Set_Text_colour(YELLOW);
-	mylcd.Set_Text_Back_colour(BLACK);
-	mylcd.Print_String(sTime, sx+4+70, sy+3);
-
-	
-}
 
 void get_ser_data() {
 	int iData = 0;
 	int iButton = -1;
 	String iButtType = "A";
 	String sData = "";
+	String bData;
 	String sButton = "";
 
 
@@ -227,14 +216,44 @@ void get_ser_data() {
 	}
 	if (sData.length() > 2) {
 		iButton = sData.indexOf("]");
-		if (iButton > 0) {
-			iButton = atoi(sData[1]);
-			//iButtType = sData[2];
-			sButton = sData.substring(3);
-			Serial.println("iButton: "+String(iButton));
-			Serial.println("sButton: "+sButton);
-				//displaytime(sButton);
-				printboxed(sButton, iButton, 4);
+		if (iButton > 1) {
+			
+			bData = sData[1];
+			iButton = bData.toInt();
+
+			switch (sData[1]) {
+				case 'A': //define how many boxes
+					bData = sData[3];
+					boxcount = bData.toInt();
+					Serial.println("configurator [boxes]: "+String(boxcount));
+					Serial.println("sData: "+sData);
+					break;
+				case 'B': //clear screen
+					Serial.println("clr");
+					mylcd.Fill_Screen(BLACK);
+					break;
+				case 'C': //refresh screen
+					Serial.println("refresh");
+					mylcd.Fill_Screen(BLACK);
+					refresh = true;
+					delay(20);
+					Serial.println("sData: "+sData);
+					if (boxcount > -1) {
+						for (int ii = 0; ii <= boxcount; ii++) {
+							printboxed(boxdata[ii].sboxdata, ii, 4);
+
+						}
+					} //if (boxcount > -1) {
+					break;
+				default:
+					//iButtType = sData[2];
+					sButton = sData.substring(3);
+					Serial.println("iButton: "+String(iButton)+" / sButton: "+sButton);
+						//displaytime(sButton);
+						//printboxed(sButton, iButton, 4);
+						boxdata[iButton].sboxdata = sButton;
+					break;
+			}
 		}
 	}
 }
@@ -270,7 +289,7 @@ void loop() {
 		pressed=boxnum(p.x, p.y);
 		if (pressed != lastpressed) {
 			if (debounce > -1) {
-				printboxed(boxmsg[lastpressed], lastpressed, 4);
+				printboxed(boxdata[lastpressed].sboxdata, lastpressed, 4);
 			}
 			debounce = 0;
 			lastpressed = pressed;
@@ -278,8 +297,11 @@ void loop() {
 		}
 		if (sendit) {
 			//printboxed(String(pressed), 5, 4);
-			//printboxedhighlight(boxmsg[pressed], pressed, 4);
-			Serial.println("B*"+leadingzero(pressed));
+			printboxedhighlight(boxdata[pressed].sboxdata, pressed, 4);
+			Serial.println("B*"+leadingzero(pressed)+"$"+boxdata[pressed].sboxdata);
+			delay(200);
+			printboxed(boxdata[pressed].sboxdata, pressed, 4);
+
 		}
 	}
 	

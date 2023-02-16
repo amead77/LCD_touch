@@ -16,6 +16,7 @@ global sPort
 global lPortlist
 global ser
 global lasttime
+global pagecount
 
 #class tLCDData(object):
 #    def __init__(self, ):
@@ -23,6 +24,15 @@ global lasttime
 LCDSlots = 7
 LCDTime = 0
 LCDSlotSelect = ["[0]", "[1]", "[2]", "[3]", "[4]", "[5]", "[6]", "[7]"]
+
+class cPage(object):
+    def __init__(self, pageno=None, boxno=None, boxmsg=None):
+        self.pageno = pageno
+        self.boxno = boxno
+        self.boxmsg = boxmsg
+global Pages
+Pages = []
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # test
 
@@ -65,15 +75,15 @@ def sendtime():
 #    await asyncio.sleep(0.1)
     global lasttime
     now = datetime.now()
-    #print("now =", now)
-    # dd/mm/YY H:M:S
     dt_string = now.strftime("%H:%M")
-    #print("date and time =", dt_string)
+    
     if dt_string != lasttime:
         lasttime = dt_string
         print(f"DT:{dt_string} LT:{lasttime}")
         dt_string=LCDSlotSelect[LCDTime]+dt_string
         ser.write(dt_string.encode('utf-8'))
+        time.sleep(0.3)
+        ser.write("[C]".encode('utf-8'))
 
 
 def CheckDataRecv():
@@ -82,6 +92,19 @@ def CheckDataRecv():
     if sData != "":
         print(sData)
     return sData
+
+def buildpages():
+    global Pages
+    global pagecount
+    pagecount = 1
+    Pages.append(cPage(0,0,"msg0/0")) #ignored as clock in ere
+    Pages.append(cPage(0,1,"msg0/1"))
+    Pages.append(cPage(0,2,"msg0/2"))
+    Pages.append(cPage(0,3,"msg0/3"))
+    Pages.append(cPage(0,4,"msg0/4"))
+
+
+
 
 ###############################################################################
 # main
@@ -99,8 +122,19 @@ def main():
     except:
         ExitProgram("error opening port")
     #else:
-    time.sleep(2) #wait for display to init
-#    for iIter in range(0,1000):
+    time.sleep(3) #wait for display to init
+
+
+    ###tests
+#    for iIter in range(0,9):
+    ser.write("[A]1".encode('utf-8'))
+    time.sleep(0.5)
+    ser.write("[1]box1".encode('utf-8'))
+    time.sleep(0.5)
+#    sendtime()
+#    time.sleep(2)
+#    ser.write("[B]".encode('utf-8'))
+
     while True:
         sendtime()
         CheckDataRecv()
