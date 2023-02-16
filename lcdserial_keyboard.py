@@ -20,9 +20,9 @@ global lasttime
 #class tLCDData(object):
 #    def __init__(self, ):
 #        self.equipid = equipid
-
-LCDTime = "[0A]"
-LCDData = ["[1B]", "[2B]"]
+LCDSlots = 7
+LCDTime = 0
+LCDSlotSelect = ["[0]", "[1]", "[2]", "[3]", "[4]", "[5]", "[6]", "[7]"]
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # test
 
@@ -72,13 +72,13 @@ def sendtime():
     if dt_string != lasttime:
         lasttime = dt_string
         print(f"DT:{dt_string} LT:{lasttime}")
-        dt_string=LCDTime+dt_string
+        dt_string=LCDSlotSelect[LCDTime]+dt_string
         ser.write(dt_string.encode('utf-8'))
 
 
 def CheckDataRecv():
     global ser
-    sData = ser.readline()
+    sData = str(ser.readline(), 'utf-8')
     if sData != "":
         print(sData)
     return sData
