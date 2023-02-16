@@ -93,7 +93,7 @@ typedef struct s_boxdata {
 	String sboxdata;
 };
 
-s_boxdef boxno[6] = {{1,1,319, 45}, {1,50,150, 100}, {1,51,150, 71}, {1,76,150, 96}, {1,101,150, 121}, {1,126,150, 146}};
+s_boxdef boxno[6] = {{1,1,319, 45}, {1,47,150, 92}, {1,94,150, 139}, {1,141,150, 186}, {1,188,150, 233}, {1,235,150, 280}};
 String boxmsg[6] = {"TEST 01", "TEST 02", "TEST 03", "TEST 04", "TEST 05", "TEST 06"};
 s_boxdef timeplace = {1,1,319,45};
 
@@ -220,7 +220,7 @@ void get_ser_data() {
 			
 			bData = sData[1];
 			iButton = bData.toInt();
-
+			boxcount = 7; //because i don't want to set how many boxes from python "[A]7"
 			switch (sData[1]) {
 				case 'A': //define how many boxes
 					bData = sData[3];
@@ -234,7 +234,7 @@ void get_ser_data() {
 					break;
 				case 'C': //refresh screen
 					Serial.println("refresh");
-					mylcd.Fill_Screen(BLACK);
+					//mylcd.Fill_Screen(BLACK);
 					refresh = true;
 					delay(20);
 					Serial.println("sData: "+sData);

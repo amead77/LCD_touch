@@ -17,19 +17,22 @@ global lPortlist
 global ser
 global lasttime
 global pagecount
+global pageboxes
 
 #class tLCDData(object):
 #    def __init__(self, ):
 #        self.equipid = equipid
-LCDSlots = 7
+LCDSlots = 5
 LCDTime = 0
 LCDSlotSelect = ["[0]", "[1]", "[2]", "[3]", "[4]", "[5]", "[6]", "[7]"]
 
 class cPage(object):
-    def __init__(self, pageno=None, boxno=None, boxmsg=None):
+    def __init__(self, pageno=None, boxno=None, boxmsg=None, boxchanged=None):
         self.pageno = pageno
         self.boxno = boxno
         self.boxmsg = boxmsg
+        self.boxchanged = boxchanged
+
 global Pages
 Pages = []
 
@@ -67,23 +70,33 @@ def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--port', action='store', help='port location', default='')
     args = parser.parse_args()
-    if args.port=='': ExitProgram('\nNo port given, use --port')
-    sPort = args.port
-    print(f'PORT: {args.port}')
+    
+    #override for vscode
+    sPort = '/dev/ttyACM0'
+    #if args.port=='': ExitProgram('\nNo port given, use --port')
+    #sPort = args.port
+    #print(f'PORT: {args.port}')
 
 def sendtime():
 #    await asyncio.sleep(0.1)
     global lasttime
+    global Pages
     now = datetime.now()
     dt_string = now.strftime("%H:%M")
     
     if dt_string != lasttime:
         lasttime = dt_string
         print(f"DT:{dt_string} LT:{lasttime}")
-        dt_string=LCDSlotSelect[LCDTime]+dt_string
-        ser.write(dt_string.encode('utf-8'))
-        time.sleep(0.3)
-        ser.write("[C]".encode('utf-8'))
+        #dt_string=LCDSlotSelect[LCDTime]+dt_string
+        
+        Pages[0].pageno = 0
+        Pages[0].boxno = 0
+        Pages[0].boxmsg = dt_string
+        Pages[0].boxchanged = True
+
+        #ser.write(dt_string.encode('utf-8'))
+        #time.sleep(0.3)
+        #ser.write("[C]".encode('utf-8'))
 
 
 def CheckDataRecv():
@@ -96,14 +109,31 @@ def CheckDataRecv():
 def buildpages():
     global Pages
     global pagecount
-    pagecount = 1
-    Pages.append(cPage(0,0,"msg0/0")) #ignored as clock in ere
-    Pages.append(cPage(0,1,"msg0/1"))
-    Pages.append(cPage(0,2,"msg0/2"))
-    Pages.append(cPage(0,3,"msg0/3"))
-    Pages.append(cPage(0,4,"msg0/4"))
+    pagecount = 1 #currently only 1 page
+    Pages.append(cPage(0,0,"msg0/0", True)) #ignored as clock in ere
+    Pages.append(cPage(0,1,"msg0/1", True))
+    Pages.append(cPage(0,2,"msg0/2", True))
+    Pages.append(cPage(0,3,"msg0/3", True))
+    Pages.append(cPage(0,4,"msg0/4", True))
 
 
+def sendpage():
+    global Pages
+    global pagecount
+    global ser
+    hasupdate = False
+    iIter = 0
+    strtmp = ""
+    if pagecount > 0:
+        for iIter in range(LCDSlots):
+            if (Pages[iIter].boxchanged == True):
+                Pages[iIter].boxchanged = False
+                hasupdate = True
+                strtmp = '['+str(Pages[iIter].boxno)+']'+Pages[iIter].boxmsg
+                ser.write(strtmp.encode('utf-8'))
+                time.sleep(0.1)
+    if hasupdate:
+        ser.write('[C]'.encode('utf-8'))
 
 
 ###############################################################################
@@ -127,16 +157,19 @@ def main():
 
     ###tests
 #    for iIter in range(0,9):
-    ser.write("[A]1".encode('utf-8'))
-    time.sleep(0.5)
-    ser.write("[1]box1".encode('utf-8'))
-    time.sleep(0.5)
+    #ser.write("[A]1".encode('utf-8'))
+    #time.sleep(0.5)
+    #ser.write("[1]box1".encode('utf-8'))
+    #time.sleep(0.5)
 #    sendtime()
 #    time.sleep(2)
 #    ser.write("[B]".encode('utf-8'))
 
+    buildpages()
+
     while True:
         sendtime()
+        sendpage()
         CheckDataRecv()
     ExitProgram("bye.")
 
