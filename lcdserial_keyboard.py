@@ -3,7 +3,7 @@ import serial
 import io
 from datetime import datetime
 import time
-import asyncio
+#import asyncio
 import glob
 import os
 from sys import exit
