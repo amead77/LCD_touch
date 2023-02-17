@@ -107,6 +107,10 @@ def sendtime():
 
 
 
+# *********************************
+# get to work on this
+# *********************************
+
 def CheckDataRecv():
     global ser
     global Pages
@@ -121,7 +125,6 @@ def CheckDataRecv():
         if sData[2].isnumeric():
             iIter = int(sData[2])
             Pages[iIter].recvdata = True
-
     return sData
 
 
