@@ -27,11 +27,15 @@ LCDTime = 0
 LCDSlotSelect = ["[0]", "[1]", "[2]", "[3]", "[4]", "[5]", "[6]", "[7]"]
 
 class cPage(object):
-    def __init__(self, pageno=None, boxno=None, boxmsg=None, boxchanged=None):
+    def __init__(self, pageno=None, boxno=None, boxmsg=None, boxchanged=None, recvdata=None, hotkey=None, ident=None):
         self.pageno = pageno
         self.boxno = boxno
         self.boxmsg = boxmsg
         self.boxchanged = boxchanged
+        self.recvdata = recvdata
+        self.hotkey = hotkey
+        self.ident = ident
+
 
 global Pages
 Pages = []
@@ -93,28 +97,43 @@ def sendtime():
         Pages[0].boxno = 0
         Pages[0].boxmsg = dt_string
         Pages[0].boxchanged = True
+        Pages[0].recvdata = False
+        Pages[0].hotkey = "None"
+        Pages[0].ident = "B*0"
 
         #ser.write(dt_string.encode('utf-8'))
         #time.sleep(0.3)
         #ser.write("[C]".encode('utf-8'))
 
 
+
 def CheckDataRecv():
     global ser
+    global Pages
     sData = str(ser.readline(), 'utf-8')
     if sData != "":
         print(sData)
+        match sData:
+            case "B*1":
+                pass
+            case _:
+                pass
+        if sData[2].isnumeric():
+            iIter = int(sData[2])
+            Pages[iIter].recvdata = True
+
     return sData
+
 
 def buildpages():
     global Pages
     global pagecount
     pagecount = 1 #currently only 1 page
-    Pages.append(cPage(0,0,"msg0/0", True)) #ignored as clock in ere
-    Pages.append(cPage(0,1,"msg0/1", True))
-    Pages.append(cPage(0,2,"msg0/2", True))
-    Pages.append(cPage(0,3,"msg0/3", True))
-    Pages.append(cPage(0,4,"msg0/4", True))
+    Pages.append(cPage(0,0,"msg0/0", True, False, "None", "B*0")) #ignored as clock in ere
+    Pages.append(cPage(0,1,"msg0/1", True, False, "None", "B*1"))
+    Pages.append(cPage(0,2,"msg0/2", True, False, "None", "B*2"))
+    Pages.append(cPage(0,3,"msg0/3", True, False, "None", "B*3"))
+    Pages.append(cPage(0,4,"msg0/4", True, False, "None", "B*4"))
 
 
 def sendpage():
