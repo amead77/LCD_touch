@@ -12,6 +12,10 @@ import argparse #used for argparser
 import m_serialstuff
 #from sshkeyboard import listen_keyboard, stop_listening
 #sshkeyboard is no good for this, is blocking while waiting a key
+
+import pyautogui
+
+
 global sPort
 global lPortlist
 global ser
@@ -22,7 +26,7 @@ global pageboxes
 #class tLCDData(object):
 #    def __init__(self, ):
 #        self.equipid = equipid
-LCDSlots = 5
+LCDSlots = 7
 LCDTime = 0
 LCDSlotSelect = ["[0]", "[1]", "[2]", "[3]", "[4]", "[5]", "[6]", "[7]"]
 
@@ -117,8 +121,12 @@ def CheckDataRecv():
     sData = str(ser.readline(), 'utf-8')
     if sData != "":
         print(sData)
+        sData = sData[0:4]
         match sData:
-            case "B*1":
+            case "B*00":
+                now = datetime.now()
+                dt_string = now.strftime("%H:%M")
+                pyautogui.write(dt_string, interval=0.05)
                 pass
             case _:
                 pass
@@ -132,11 +140,14 @@ def buildpages():
     global Pages
     global pagecount
     pagecount = 1 #currently only 1 page
-    Pages.append(cPage(0,0,"msg0/0", True, False, "None", "B*0")) #ignored as clock in ere
-    Pages.append(cPage(0,1,"msg0/1", True, False, "None", "B*1"))
-    Pages.append(cPage(0,2,"msg0/2", True, False, "None", "B*2"))
-    Pages.append(cPage(0,3,"msg0/3", True, False, "None", "B*3"))
-    Pages.append(cPage(0,4,"msg0/4", True, False, "None", "B*4"))
+    Pages.append(cPage(0,0,"msg0/0", True, False, "None", "B*00")) #ignored as clock in ere
+    Pages.append(cPage(0,1,"msg0/1", True, False, "None", "B*01"))
+    Pages.append(cPage(0,2,"msg0/2", True, False, "None", "B*02"))
+    Pages.append(cPage(0,3,"msg0/3", True, False, "None", "B*03"))
+    Pages.append(cPage(0,4,"msg0/4", True, False, "None", "B*04"))
+    Pages.append(cPage(0,5,"msg0/5", True, False, "None", "B*05"))
+    Pages.append(cPage(0,6,"msg0/6", True, False, "None", "B*06"))
+    Pages.append(cPage(0,7,"msg0/7", True, False, "None", "B*07"))
 
 
 def sendpage():
@@ -153,8 +164,9 @@ def sendpage():
                 hasupdate = True
                 strtmp = '['+str(Pages[iIter].boxno)+']'+Pages[iIter].boxmsg
                 ser.write(strtmp.encode('utf-8'))
-                time.sleep(0.1)
+                time.sleep(0.125)
     if hasupdate:
+        time.sleep(0.25)
         ser.write('[C]'.encode('utf-8'))
 
 
@@ -170,7 +182,7 @@ def main():
     get_args()
 
     try:
-        ser = serial.Serial(port=sPort, baudrate=38400, bytesize=serial.EIGHTBITS, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, timeout=0.1)
+        ser = serial.Serial(port=sPort, baudrate=57600, bytesize=serial.EIGHTBITS, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, timeout=0.1, xonxoff=1)
     except:
         ExitProgram("error opening port")
     #else:

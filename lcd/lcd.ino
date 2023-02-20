@@ -31,14 +31,14 @@
 **********************************************************************************/
 
 
-/*
+/*####################################################
 
 ideas:
 -create boxes and keep text in array or defines - mostly done
--create pages. figure out what this lcd is actually for.
--maybe use it as interface with rpi/python. read serial data, send serial data back.
--set highlighting as byte var, on off flash. use array for all possible butts.
-*/
+
+-implement checksum on received data
+
+####################################################*/
 
 
 //
@@ -69,7 +69,7 @@ LCDWIKI_KBV mylcd(ILI9486,A3,A2,A1,A0,A4); //model,cs,cd,wr,rd,reset
 TouchScreen ts = TouchScreen(XP, YP, XM, YM, 300);
 
 //define some colour values
-#define  BLACK   0x0000
+#define BLACK   0x0000
 #define BLUE    0x001F
 #define RED     0xF800
 #define GREEN   0x07E0
@@ -78,8 +78,7 @@ TouchScreen ts = TouchScreen(XP, YP, XM, YM, 300);
 #define YELLOW  0xFFE0
 #define WHITE   0xFFFF
 
-#define header "LCD001"
-#define numboxes 5
+#define header "-LCD0-"
 
 typedef struct s_boxdef {
 	int startx;
@@ -89,13 +88,13 @@ typedef struct s_boxdef {
 };
 
 typedef struct s_boxdata {
-	int iboxnum;
+	int iboxnum; //not actually required, array position will set
 	String sboxdata;
 };
 
-s_boxdef boxno[6] = {{1,1,319, 45}, {1,47,150, 92}, {1,94,150, 139}, {1,141,150, 186}, {1,188,150, 233}, {1,235,150, 280}};
-String boxmsg[6] = {"TEST 01", "TEST 02", "TEST 03", "TEST 04", "TEST 05", "TEST 06"};
-s_boxdef timeplace = {1,1,319,45};
+s_boxdef boxno[6] = {{1,1,319, 45}, {1,47,319, 92}, {1,94,319, 139}, {1,141,319, 186}, {1,188,319, 233}, {1,235,319, 280}};
+//String boxmsg[6] = {"TEST 00", "TEST 01", "TEST 02", "TEST 03", "TEST 04", "TEST 05", "TEST 06"};
+//s_boxdef timeplace = {1,1,319,45};
 
 s_boxdata boxdata[7];
 
@@ -106,15 +105,21 @@ int pressed = -1;
 bool sendit = false;
 bool firsttime = true;
 bool refresh = false;
+int numboxes = 7;
+
 
 void setup() {
-	Serial.begin(38400);
+	Serial.begin(57600);
 	mylcd.Set_Rotation(0);
 	//rotating doesn't affect touch
 	mylcd.Init_LCD();
 //	Serial.println(mylcd.Read_ID(), HEX);
 	mylcd.Fill_Screen(BLACK);
 	Serial.println(header);
+	for (int ii = 0; ii <= 7; ii++) {
+		//boxdata[ii].iboxnum = ii;
+		boxdata[ii].sboxdata = "";
+	}
 }
 
 void printboxed(String msgstr, int boxnum, byte boxsize) {
@@ -125,8 +130,6 @@ void printboxed(String msgstr, int boxnum, byte boxsize) {
 //	int msglen = msgstr.length() * 13;
 	mylcd.Set_Text_Back_colour(BLACK);
     mylcd.Set_Draw_color(YELLOW);
-//	mylcd.Draw_Rectangle(0,0,100,40);  	
-//	mylcd.Draw_Rectangle(sx,sy,ex,ey);  	
     mylcd.Set_Draw_color(BLACK);
 	mylcd.Fill_Rectangle(sx,sy,ex,ey);  	
     mylcd.Set_Draw_color(YELLOW);
@@ -141,15 +144,9 @@ void printboxedhighlight(String msgstr, int boxnum, byte boxsize) {
 	int sy = boxno[boxnum].starty;
 	int ex = boxno[boxnum].endx;
 	int ey = boxno[boxnum].endy;
-//	int msglen = msgstr.length() * 13;
 	mylcd.Set_Text_Back_colour(YELLOW);
     mylcd.Set_Draw_color(YELLOW);
-//	mylcd.Draw_Rectangle(0,0,100,40);  	
-//	mylcd.Draw_Rectangle(sx,sy,ex,ey);  	
-//    mylcd.Set_Draw_color(BLACK);
 	mylcd.Fill_Rectangle(sx,sy,ex,ey);  	
-//    mylcd.Set_Draw_color(YELLOW);
-//	mylcd.Draw_Rectangle(sx,sy,ex,ey);  	
 	mylcd.Set_Text_Size(boxsize);
 	mylcd.Set_Text_colour(BLACK);
 	mylcd.Print_String(msgstr, sx+4, sy+3);
@@ -167,10 +164,7 @@ String leadingzero(byte tx) {
 }
 
 void setdisp() {
-	//printboxed("00:00", 0);
-	//printboxed("Test 02", 1, 1);
-	//printboxed("Test 03", 2, 1);
-	//printboxed("Test 04", 3, 1);
+	//printboxed("Test", 3, 1);
 	//printboxed(String(mylcd.Get_Display_Height()), 4);
 	//printboxed(String(mylcd.Get_Display_Width()), 5);
 }
@@ -179,16 +173,17 @@ void dispcoord(int xx, int yy) {
 	mylcd.Set_Text_colour(GREEN);
 	mylcd.Print_Number_Int(xx, 0, 200, 3, ' ',10);
 	mylcd.Print_Number_Int(yy, 0, 220, 3, ' ',10);
-
 }
 
+
+//###############################################################################
+//# maps x,y co-ords to onscreen box
+//###############################################################################
 int boxnum(int px, int py) {
 	String buildstr;
 	for (int bx=0; bx < numboxes; bx++) {
 		buildstr=">"+String(bx);
-//		Serial.println(buildstr);
 		if ((px >= boxno[bx].startx) && (px <= boxno[bx].endx) && (py >= boxno[bx].starty) && (py <= boxno[bx].endy)) {
-//			Serial.println(bx);
 			return bx;
 			break;
 		}
@@ -197,6 +192,16 @@ int boxnum(int px, int py) {
 }
 
 
+void send_header() {
+	Serial.println(header);
+}
+
+//###############################################################################
+//# receives data from serial
+//# format is: [X]yyy
+//# where X is either A,B,C (commands) or 0..9 (lcd box)
+//# where yyy is the data that comes with it
+//###############################################################################
 void get_ser_data() {
 	int iData = 0;
 	int iButton = -1;
@@ -205,7 +210,6 @@ void get_ser_data() {
 	String bData;
 	String sButton = "";
 
-
 	while (Serial.available() > 0) {
 		iData = Serial.read();
 		if ((iData != 10) && (iData != 13)) {
@@ -213,54 +217,62 @@ void get_ser_data() {
 		} else {
 			break;
 		}
-	}
+	} //while
+
 	if (sData.length() > 2) {
 		iButton = sData.indexOf("]");
-		if (iButton > 1) {
-			
+		if (iButton >= 0) {
+			boxcount = 7; //because i don't want to set how many boxes from python "[A]7"
 			bData = sData[1];
 			iButton = bData.toInt();
-			boxcount = 7; //because i don't want to set how many boxes from python "[A]7"
 			switch (sData[1]) {
-				case 'A': //define how many boxes
+				case 'A': //define how many boxes (can ignore for now)
 					bData = sData[3];
-					boxcount = bData.toInt();
-					Serial.println("configurator [boxes]: "+String(boxcount));
-					Serial.println("sData: "+sData);
+					//boxcount = bData.toInt();
+						Serial.println("configurator [boxes]: "+String(boxcount));
+						Serial.println("sData: "+sData);
+
 					break;
 				case 'B': //clear screen
-					Serial.println("clr");
+						Serial.println("clr");
+
 					mylcd.Fill_Screen(BLACK);
+					delay(250);
 					break;
 				case 'C': //refresh screen
-					Serial.println("refresh");
-					//mylcd.Fill_Screen(BLACK);
+						Serial.println("refresh");
+
 					refresh = true;
 					delay(20);
-					Serial.println("sData: "+sData);
-					if (boxcount > -1) {
-						for (int ii = 0; ii <= boxcount; ii++) {
-							printboxed(boxdata[ii].sboxdata, ii, 4);
+						Serial.println("sData: "+sData);
 
+					if (boxcount > -1) {
+						for (int ii = 0; ii < boxcount; ii++) {
+							printboxed(boxdata[ii].sboxdata, ii, 4);
+							Serial.println("boxcount: "+String(boxcount));
+							delay(25);
 						}
 					} //if (boxcount > -1) {
 					break;
+				case 'D': //send simple lcd/arduino header info for id dev.
+					send_header();
+					delay(50);
 				default:
-					//iButtType = sData[2];
 					sButton = sData.substring(3);
-					Serial.println("iButton: "+String(iButton)+" / sButton: "+sButton);
-						//displaytime(sButton);
-						//printboxed(sButton, iButton, 4);
-						boxdata[iButton].sboxdata = sButton;
+						Serial.println("iButton: "+String(iButton)+" / sButton: "+sButton);
+					
+					boxdata[iButton].sboxdata = sButton;
 					break;
-			}
-		}
-	}
+			} //switch
+		} //if (iButton > 1) {
+	} //if (sData.length() > 2) {
 }
+
 
 void loop() {
 	if (firsttime) {
-		setdisp();
+		//setdisp(); //only used when testing
+		send_header();
 		firsttime = false;
 	}
 	if (debounce != -1) {
@@ -277,6 +289,8 @@ void loop() {
 	}
 	sendit = false;
 	digitalWrite(13, HIGH);
+	
+	//refactor out somewhere
 	TSPoint p = ts.getPoint();
 	digitalWrite(13, LOW);
 	pinMode(XM, OUTPUT);
@@ -298,13 +312,12 @@ void loop() {
 		if (sendit) {
 			//printboxed(String(pressed), 5, 4);
 			printboxedhighlight(boxdata[pressed].sboxdata, pressed, 4);
-			Serial.println("B*"+leadingzero(pressed)+"$"+boxdata[pressed].sboxdata);
-			delay(200);
+				Serial.println("B*"+leadingzero(pressed)+"$"+boxdata[pressed].sboxdata);
+			delay(200); //remove this, modify below to compensate
 			printboxed(boxdata[pressed].sboxdata, pressed, 4);
-
 		}
-	}
+	} //if p.z
 	
-	delay(50);
+	delay(10); //reduced from 50 because of lag in functions
 
 }
