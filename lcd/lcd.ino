@@ -1,21 +1,42 @@
+/***********************************************************************************
+*This program is a demo of displaying string
+*This demo was made for LCD modules with 8bit or 16bit data port.
+*This program requires the the LCDKIWI library.
+
+* File                : display_string.ino
+* Hardware Environment: Arduino UNO&Mega2560
+* Build Environment   : Arduino
+
+*Set the pins to the correct ones for your development shield or breakout board.
+*This demo use the BREAKOUT BOARD only and use these 8bit data lines to the LCD,
+*pin usage as follow:
+*                  LCD_CS  LCD_CD  LCD_WR  LCD_RD  LCD_RST  SD_SS  SD_DI  SD_DO  SD_SCK 
+*     Arduino Uno    A3      A2      A1      A0      A4      10     11     12      13                            
+*Arduino Mega2560    A3      A2      A1      A0      A4      10     11     12      13                           
+
+*                  LCD_D0  LCD_D1  LCD_D2  LCD_D3  LCD_D4  LCD_D5  LCD_D6  LCD_D7  
+*     Arduino Uno    8       9       2       3       4       5       6       7
+*Arduino Mega2560    8       9       2       3       4       5       6       7 
+
+*Remember to set the pins to suit your display module!
+*
+* @attention
+*
+* THE PRESENT FIRMWARE WHICH IS FOR GUIDANCE ONLY AIMS AT PROVIDING CUSTOMERS
+* WITH CODING INFORMATION REGARDING THEIR PRODUCTS IN ORDER FOR THEM TO SAVE
+* TIME. AS A RESULT, QD electronic SHALL NOT BE HELD LIABLE FOR ANY
+* DIRECT, INDIRECT OR CONSEQUENTIAL DAMAGES WITH RESPECT TO ANY CLAIMS ARISING
+* FROM THE CONTENT OF SUCH FIRMWARE AND/OR THE USE MADE BY CUSTOMERS OF THE 
+* CODING INFORMATION CONTAINED HEREIN IN CONNECTION WITH THEIR PRODUCTS.
+**********************************************************************************/
+
+
 /*####################################################
 
-# Arduino Touchscreen LCD interface.
-
-# https://github.com/amead77/LCD_touch
-# arduino touchscreen LCD is:
-# https://www.amazon.co.uk/gp/product/B075CXXL1M
-# uses Arduino UNO attached to LCD. 
-# Python sends data to arduino, which puts them into boxes on lcd.
-# LCD detects press and matches to a box, returns that box number
-# Python receives that data then decides what to do with it.
-
-TODO:
--create boxes and keep text in array - mostly done
+ideas:
+-create boxes and keep text in array or defines - mostly done
 
 -implement checksum on received data
--request resend when no match checksum
--find out why data corruption occurs
 
 ####################################################*/
 
@@ -88,15 +109,13 @@ int numboxes = 7;
 
 
 void setup() {
-	pinMode(XM, OUTPUT);
-	pinMode(YP, OUTPUT);
 	Serial.begin(57600);
 	mylcd.Set_Rotation(0);
 	//rotating doesn't affect touch
 	mylcd.Init_LCD();
 //	Serial.println(mylcd.Read_ID(), HEX);
 	mylcd.Fill_Screen(BLACK);
-//	Serial.println(header);
+	Serial.println(header);
 	for (int ii = 0; ii <= 7; ii++) {
 		//boxdata[ii].iboxnum = ii;
 		boxdata[ii].sboxdata = "";
@@ -182,19 +201,15 @@ void send_header() {
 //# format is: [X]yyy
 //# where X is either A,B,C (commands) or 0..9 (lcd box)
 //# where yyy is the data that comes with it
-//# todo: implement checksum check
 //###############################################################################
 void get_ser_data() {
 	int iData = 0;
 	int iButton = -1;
-	int chkPos = -1;
-	String chkStr;
 	String iButtType = "A";
 	String sData = "";
 	String bData;
 	String sButton = "";
 
-	//get the data from the port, ignoring LF or CR
 	while (Serial.available() > 0) {
 		iData = Serial.read();
 		if ((iData != 10) && (iData != 13)) {
@@ -203,10 +218,9 @@ void get_ser_data() {
 			break;
 		}
 	} //while
-	chkPos = sData.indexOf("!");
-	if ((sData.length() > 2) && (chkPos > 0) && (chkPos < sData.length())) {
+
+	if (sData.length() > 2) {
 		iButton = sData.indexOf("]");
-		chkStr = sData.substring(chkPos+1);
 		if (iButton >= 0) {
 			boxcount = 7; //because i don't want to set how many boxes from python "[A]7"
 			bData = sData[1];
@@ -215,12 +229,12 @@ void get_ser_data() {
 				case 'A': //define how many boxes (can ignore for now)
 					bData = sData[3];
 					//boxcount = bData.toInt();
-					Serial.println("configurator [boxes]: "+String(boxcount));
-					Serial.println("sData: "+sData);
+						Serial.println("configurator [boxes]: "+String(boxcount));
+						Serial.println("sData: "+sData);
 
 					break;
 				case 'B': //clear screen
-					Serial.println("clr");
+						Serial.println("clr");
 
 					mylcd.Fill_Screen(BLACK);
 					delay(250);
@@ -228,8 +242,8 @@ void get_ser_data() {
 				case 'C': //refresh screen
 						Serial.println("refresh");
 
-						refresh = true; //this does nothing. remove or fix
-						delay(20);
+					refresh = true;
+					delay(20);
 						Serial.println("sData: "+sData);
 
 					if (boxcount > -1) {
@@ -245,22 +259,42 @@ void get_ser_data() {
 					delay(50);
 				default:
 					sButton = sData.substring(3);
-					Serial.println("iButton: "+String(iButton)+" / sButton: "+sButton+" / checksum: "+chkStr);
+						Serial.println("iButton: "+String(iButton)+" / sButton: "+sButton);
 					
 					boxdata[iButton].sboxdata = sButton;
 					break;
 			} //switch
-		} //if (iButton >= 0) {
+		} //if (iButton > 1) {
 	} //if (sData.length() > 2) {
 }
 
 
-void CheckButtonPress() {
+void loop() {
+	if (firsttime) {
+		//setdisp(); //only used when testing
+		send_header();
+		firsttime = false;
+	}
+	if (debounce != -1) {
+		debounce++;
+	}
+	if (debounce > 15) {
+		debounce=-1;
+		//printboxed(boxmsg[pressed], pressed, 4);
+		lastpressed = -1;
+	}
+	
+	if (Serial.available() > 0) {
+		get_ser_data();
+	}
 	sendit = false;
 	digitalWrite(13, HIGH);
+	
+	//refactor out somewhere
 	TSPoint p = ts.getPoint();
 	digitalWrite(13, LOW);
-
+	pinMode(XM, OUTPUT);
+	pinMode(YP, OUTPUT);
 	if (p.z > MINPRESSURE && p.z < MAXPRESSURE) {
 		p.x = map(p.x, TS_MINX, TS_MAXX, mylcd.Get_Display_Width(), 0);
 		p.y = map(p.y, TS_MINY, TS_MAXY, mylcd.Get_Display_Height(),0);
@@ -278,34 +312,12 @@ void CheckButtonPress() {
 		if (sendit) {
 			//printboxed(String(pressed), 5, 4);
 			printboxedhighlight(boxdata[pressed].sboxdata, pressed, 4);
-			Serial.println("B*"+leadingzero(pressed)+"$"+boxdata[pressed].sboxdata);
-			delay(200); //remove this, might be fucking the serial data
+				Serial.println("B*"+leadingzero(pressed)+"$"+boxdata[pressed].sboxdata);
+			delay(200); //remove this, modify below to compensate
 			printboxed(boxdata[pressed].sboxdata, pressed, 4);
 		}
 	} //if p.z
-}
-
-void loop() {
-	if (firsttime) {
-		//setdisp(); //only used when testing
-		send_header();
-		firsttime = false;
-	}
-	if (debounce != -1) {
-		debounce++;
-	}
-	if (debounce > 150) {
-		debounce=-1;
-		//printboxed(boxmsg[pressed], pressed, 4);
-		lastpressed = -1;
-	}
 	
-	if (Serial.available() > 0) {
-		get_ser_data();
-	}
-	
-	CheckButtonPress(); //refactored from here out to function
-
-	delay(5); //reduced from 50 because of lag in functions
+	delay(10); //reduced from 50 because of lag in functions
 
 }
