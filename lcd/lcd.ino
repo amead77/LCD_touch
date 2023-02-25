@@ -177,6 +177,7 @@ void get_ser_data() {
 	String sData = "";
 	String bData;
 	String sButton = "";
+	bool isok = false;
 
 	while (Serial.available() > 0) {
 		iData = Serial.read();
@@ -186,8 +187,13 @@ void get_ser_data() {
 			break;
 		}
 	} //while
+	chkPos = sData.indexOf("!");
+	
+	isok = (sData.length() > 2) ? true : false;
+	isok = (true && (chkPos > 0)) ? true : false;
+	isok = (true && (chkPos < sData.length())) ? true : false;
 
-	if (sData.length() > 2) {
+	if (isok) {
 		iButton = sData.indexOf("]");
 		if (iButton >= 0) {
 			boxcount = 7; //because i don't want to set how many boxes from python "[A]7"
@@ -208,16 +214,16 @@ void get_ser_data() {
 					delay(250);
 					break;
 				case 'C': //refresh screen
-						Serial.println("refresh");
+					Serial.println("refresh");
 
-					refresh = true;
+					refresh = true; //this does nothing. remove or fix
 					delay(20);
-						Serial.println("sData: "+sData);
+					Serial.println("sData: "+sData);
 
 					if (boxcount > -1) {
 						for (int ii = 0; ii < boxcount; ii++) {
 							printboxed(boxdata[ii].sboxdata, ii, 4);
-							Serial.println("boxcount: "+String(boxcount));
+							Serial.println("boxdata: "+boxdata[ii].sboxdata);
 							delay(25);
 						}
 					} //if (boxcount > -1) {
@@ -237,42 +243,18 @@ void get_ser_data() {
 }
 
 
-<<<<<<< ours
-void loop() {
-	if (firsttime) {
-		//setdisp(); //only used when testing
-		send_header();
-		firsttime = false;
-	}
-	if (debounce != -1) {
-		debounce++;
-	}
-	if (debounce > 15) {
-		debounce=-1;
-		//printboxed(boxmsg[pressed], pressed, 4);
-		lastpressed = -1;
-	}
-	
-	if (Serial.available() > 0) {
-		get_ser_data();
-	}
-=======
+
+
 void CheckButtonPress() {
->>>>>>> theirs
 	sendit = false;
 	//-------here
 	digitalWrite(13, HIGH);
-	
-	//refactor out somewhere
 	TSPoint p = ts.getPoint();
 	digitalWrite(13, LOW);
 	pinMode(XM, OUTPUT);
 	pinMode(YP, OUTPUT);
-<<<<<<< ours
-=======
 	//-------to here, MUST be in this order. do not move pinMode() out to setup()
 	// something resets it and the screen stops working properly.
->>>>>>> theirs
 	if (p.z > MINPRESSURE && p.z < MAXPRESSURE) {
 		p.x = map(p.x, TS_MINX, TS_MAXX, mylcd.Get_Display_Width(), 0);
 		p.y = map(p.y, TS_MINY, TS_MAXY, mylcd.Get_Display_Height(),0);
@@ -296,15 +278,33 @@ void CheckButtonPress() {
 		}
 	} //if p.z
 	
-<<<<<<< ours
-=======
 	if (Serial.available() > 0) {
 		get_ser_data();
 	}
+  
+  
+
+void loop() {
+	if (firsttime) {
+		//setdisp(); //only used when testing
+		send_header();
+		firsttime = false;
+	}
+	if (debounce != -1) {
+		debounce++;
+	}
+	if (debounce > 15) {
+		debounce=-1;
+		//printboxed(boxmsg[pressed], pressed, 4);
+		lastpressed = -1;
+	}
+	
+	if (Serial.available() > 0) {
+		get_ser_data();
+	}  
 	
 	CheckButtonPress(); //refactored from here out to function
 
->>>>>>> theirs
 	delay(10); //reduced from 50 because of lag in functions
 
 }

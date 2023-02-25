@@ -249,7 +249,9 @@ def sendpage():
                 time.sleep(0.125)
     if hasupdate:
         time.sleep(0.25)
-        ser.write('[C]'.encode('utf-8'))
+        strtmp = '[C]'
+        strtmp += '!'+str(computeChecksum(strtmp))
+        ser.write(strtmp.encode('utf-8'))
 
 
 ###############################################################################

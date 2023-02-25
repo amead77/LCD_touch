@@ -6,3 +6,5 @@
 /home/adam/Programming/LCD_touch/LCDWIKI_GUI.h
 /home/adam/Programming/LCD_touch/LCDWIKI_KBV.h
 /home/adam/Programming/LCD_touch/Touchscreen.h
+
+__pycache__/
