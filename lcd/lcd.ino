@@ -116,6 +116,7 @@ void printboxed(String msgstr, int boxnum, byte boxsize) {
 	mylcd.Set_Text_Size(boxsize);
 	mylcd.Set_Text_colour(YELLOW);
 	mylcd.Print_String(msgstr, sx+4, sy+3);
+	Serial.println("pb-exit");
 }
 
 void printboxedhighlight(String msgstr, int boxnum, byte boxsize) {
@@ -260,13 +261,15 @@ void get_ser_data() {
 
 
 void CheckButtonPress() {
-	pinMode(XM, OUTPUT);
-	pinMode(YP, OUTPUT);
 	sendit = false;
+	//-------here
 	digitalWrite(13, HIGH);
 	TSPoint p = ts.getPoint();
 	digitalWrite(13, LOW);
-
+	pinMode(XM, OUTPUT);
+	pinMode(YP, OUTPUT);
+	//-------to here, MUST be in this order. do not move pinMode() out to setup()
+	// something resets it and the screen stops working properly.
 	if (p.z > MINPRESSURE && p.z < MAXPRESSURE) {
 		p.x = map(p.x, TS_MINX, TS_MAXX, mylcd.Get_Display_Width(), 0);
 		p.y = map(p.y, TS_MINY, TS_MAXY, mylcd.Get_Display_Height(),0);
@@ -312,6 +315,6 @@ void loop() {
 	
 	CheckButtonPress(); //refactored from here out to function
 
-	delay(20); //reduced from 50 because of lag in functions
+	delay(10); //reduced from 50 because of lag in functions
 
 }
