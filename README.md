@@ -10,3 +10,4 @@ lcd/lcd.ino on the Arduino Uno side (has to be in sub dir because aruino ide)
 
 LCD: https://www.amazon.co.uk/gp/product/B075CXXL1M
 
+libs for the LCD: https://github.com/tedead/Kuman-SC3A
