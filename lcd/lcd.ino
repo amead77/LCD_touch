@@ -1,42 +1,21 @@
-/***********************************************************************************
-*This program is a demo of displaying string
-*This demo was made for LCD modules with 8bit or 16bit data port.
-*This program requires the the LCDKIWI library.
-
-* File                : display_string.ino
-* Hardware Environment: Arduino UNO&Mega2560
-* Build Environment   : Arduino
-
-*Set the pins to the correct ones for your development shield or breakout board.
-*This demo use the BREAKOUT BOARD only and use these 8bit data lines to the LCD,
-*pin usage as follow:
-*                  LCD_CS  LCD_CD  LCD_WR  LCD_RD  LCD_RST  SD_SS  SD_DI  SD_DO  SD_SCK 
-*     Arduino Uno    A3      A2      A1      A0      A4      10     11     12      13                            
-*Arduino Mega2560    A3      A2      A1      A0      A4      10     11     12      13                           
-
-*                  LCD_D0  LCD_D1  LCD_D2  LCD_D3  LCD_D4  LCD_D5  LCD_D6  LCD_D7  
-*     Arduino Uno    8       9       2       3       4       5       6       7
-*Arduino Mega2560    8       9       2       3       4       5       6       7 
-
-*Remember to set the pins to suit your display module!
-*
-* @attention
-*
-* THE PRESENT FIRMWARE WHICH IS FOR GUIDANCE ONLY AIMS AT PROVIDING CUSTOMERS
-* WITH CODING INFORMATION REGARDING THEIR PRODUCTS IN ORDER FOR THEM TO SAVE
-* TIME. AS A RESULT, QD electronic SHALL NOT BE HELD LIABLE FOR ANY
-* DIRECT, INDIRECT OR CONSEQUENTIAL DAMAGES WITH RESPECT TO ANY CLAIMS ARISING
-* FROM THE CONTENT OF SUCH FIRMWARE AND/OR THE USE MADE BY CUSTOMERS OF THE 
-* CODING INFORMATION CONTAINED HEREIN IN CONNECTION WITH THEIR PRODUCTS.
-**********************************************************************************/
-
-
 /*####################################################
 
-ideas:
--create boxes and keep text in array or defines - mostly done
+# Arduino Touchscreen LCD interface.
+
+# https://github.com/amead77/LCD_touch
+# arduino touchscreen LCD is:
+# https://www.amazon.co.uk/gp/product/B075CXXL1M
+# uses Arduino UNO attached to LCD. 
+# Python sends data to arduino, which puts them into boxes on lcd.
+# LCD detects press and matches to a box, returns that box number
+# Python receives that data then decides what to do with it.
+
+TODO:
+-create boxes and keep text in array - mostly done
 
 -implement checksum on received data
+-request resend when no match checksum
+-find out why data corruption occurs
 
 ####################################################*/
 

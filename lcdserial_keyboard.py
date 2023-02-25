@@ -1,4 +1,19 @@
-#lcd interface via serial io, act as keyboard output
+###############################################################################
+# https://github.com/amead77/LCD_touch
+# arduino touchscreen LCD is:
+# https://www.amazon.co.uk/gp/product/B075CXXL1M
+# uses Arduino UNO attached to LCD. 
+# Python sends data to arduino, which puts them into boxes on lcd.
+# LCD detects press and matches to a box, returns that box number
+# Python receives that data then decides what to do with it.
+#
+# TODO: change sent data to include checksum
+# TODO: if data not match checksum, arduino should request resend.
+# TODO: find out why corruption happens in first place. Probably due to IO
+#       blocking when using delay() and LCD routines.
+#
+###############################################################################
+
 import serial
 import io
 from datetime import datetime
@@ -54,6 +69,29 @@ def ExitProgram(ExitString):
     print(ExitString)
     exit(0)
 
+###############################################################################
+# compute checksum and return (to be used with data sent)
+###############################################################################
+def computeChecksum(value):
+        """
+        ##no idea where I got this from, must have been py2 code as I had
+        to add encoding='utf-8' to the bytearray.
+
+        Compute a checksum for the specified string.
+        The checksum is computed by XORing the bytes in the string together.
+        Parameters
+        ----------
+        value : string
+            The string to compute the checksum for.
+        Returns
+        -------
+        int
+            The computed checksum.
+        """
+        checksum = 0
+        for byte in bytearray(value, encoding='utf-8'):
+            checksum ^= byte
+        return checksum 
 
 
 ###############################################################################
