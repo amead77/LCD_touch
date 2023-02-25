@@ -187,11 +187,14 @@ void send_header() {
 void get_ser_data() {
 	int iData = 0;
 	int iButton = -1;
+	int chkPos = -1;
+	String chkStr;
 	String iButtType = "A";
 	String sData = "";
 	String bData;
 	String sButton = "";
 
+	//get the data from the port, ignoring LF or CR
 	while (Serial.available() > 0) {
 		iData = Serial.read();
 		if ((iData != 10) && (iData != 13)) {
@@ -200,9 +203,10 @@ void get_ser_data() {
 			break;
 		}
 	} //while
-
-	if (sData.length() > 2) {
+	chkPos = sData.indexOf("!");
+	if ((sData.length() > 2) && (chkPos > 0) && (chkPos < sData.length())) {
 		iButton = sData.indexOf("]");
+		chkStr = sData.substring(chkPos+1);
 		if (iButton >= 0) {
 			boxcount = 7; //because i don't want to set how many boxes from python "[A]7"
 			bData = sData[1];
@@ -241,7 +245,7 @@ void get_ser_data() {
 					delay(50);
 				default:
 					sButton = sData.substring(3);
-					Serial.println("iButton: "+String(iButton)+" / sButton: "+sButton);
+					Serial.println("iButton: "+String(iButton)+" / sButton: "+sButton+" / checksum: "+chkStr);
 					
 					boxdata[iButton].sboxdata = sButton;
 					break;

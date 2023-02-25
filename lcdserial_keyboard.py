@@ -17,6 +17,11 @@
 #   anyone reading this and lcd/lcd.ino will see I've tried various stuff
 #   at points, the leftovers are still here.
 #
+#
+# ALSO: LCD/Arduino port is hardcoded in get_args()
+# just uncomment as required.
+#
+#
 ###############################################################################
 
 import serial
@@ -238,6 +243,8 @@ def sendpage():
                 Pages[iIter].boxchanged = False
                 hasupdate = True
                 strtmp = '['+str(Pages[iIter].boxno)+']'+Pages[iIter].boxmsg
+                #compute and add checksum after !
+                strtmp += '!'+str(computeChecksum(strtmp))
                 ser.write(strtmp.encode('utf-8'))
                 time.sleep(0.125)
     if hasupdate:
