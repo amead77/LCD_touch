@@ -88,8 +88,6 @@ int numboxes = 7;
 
 
 void setup() {
-	pinMode(XM, OUTPUT);
-	pinMode(YP, OUTPUT);
 	Serial.begin(57600);
 	mylcd.Set_Rotation(0);
 	//rotating doesn't affect touch
@@ -193,6 +191,7 @@ void get_ser_data() {
 	String sData = "";
 	String bData;
 	String sButton = "";
+	bool isok = false;
 
 	//get the data from the port, ignoring LF or CR
 	while (Serial.available() > 0) {
@@ -204,7 +203,12 @@ void get_ser_data() {
 		}
 	} //while
 	chkPos = sData.indexOf("!");
-	if ((sData.length() > 2) && (chkPos > 0) && (chkPos < sData.length())) {
+	
+	isok = (sData.length() > 2) ? true : false;
+	isok = (true && (chkPos > 0)) ? true : false;
+	isok = (true && (chkPos < sData.length())) ? true : false;
+
+	if (isok) {
 		iButton = sData.indexOf("]");
 		chkStr = sData.substring(chkPos+1);
 		if (iButton >= 0) {
@@ -256,6 +260,8 @@ void get_ser_data() {
 
 
 void CheckButtonPress() {
+	pinMode(XM, OUTPUT);
+	pinMode(YP, OUTPUT);
 	sendit = false;
 	digitalWrite(13, HIGH);
 	TSPoint p = ts.getPoint();
@@ -306,6 +312,6 @@ void loop() {
 	
 	CheckButtonPress(); //refactored from here out to function
 
-	delay(5); //reduced from 50 because of lag in functions
+	delay(20); //reduced from 50 because of lag in functions
 
 }
