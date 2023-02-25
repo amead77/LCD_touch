@@ -230,16 +230,16 @@ void get_ser_data() {
 					delay(250);
 					break;
 				case 'C': //refresh screen
-						Serial.println("refresh");
+					Serial.println("refresh");
 
-						refresh = true; //this does nothing. remove or fix
-						delay(20);
-						Serial.println("sData: "+sData);
+					refresh = true; //this does nothing. remove or fix
+					delay(20);
+					Serial.println("sData: "+sData);
 
 					if (boxcount > -1) {
 						for (int ii = 0; ii < boxcount; ii++) {
 							printboxed(boxdata[ii].sboxdata, ii, 4);
-							Serial.println("boxcount: "+String(boxcount));
+							Serial.println("boxdata: "+boxdata[ii].sboxdata);
 							delay(25);
 						}
 					} //if (boxcount > -1) {
