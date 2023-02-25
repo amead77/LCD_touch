@@ -9,7 +9,7 @@ really there is only 3 files that matter:
   
   m_serialstuff.py on the PC side (this came from the pyserial library examples to look up available ports and was modified by me)
   
-  lcd.ino on the Arduino Uno side
+  lcd/lcd.ino on the Arduino Uno side (has to be in sub dir because aruino ide)
   
 
 most of the other files are libs that came with the LCD: 
