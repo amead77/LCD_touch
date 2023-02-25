@@ -12,6 +12,11 @@
 # TODO: find out why corruption happens in first place. Probably due to IO
 #       blocking when using delay() and LCD routines.
 #
+#
+# notes:
+#   anyone reading this and lcd/lcd.ino will see I've tried various stuff
+#   at points, the leftovers are still here.
+#
 ###############################################################################
 
 import serial
@@ -22,13 +27,13 @@ import time
 import glob
 import os
 from sys import exit
-#from serial.tools import list_ports_common
+#from serial.tools import list_ports_common #now uses m_serialstuff
 import argparse #used for argparser
-import m_serialstuff
+import m_serialstuff #modified version of code from serial.tools.list_ports_common
 #from sshkeyboard import listen_keyboard, stop_listening
 #sshkeyboard is no good for this, is blocking while waiting a key
 
-import pyautogui
+import pyautogui #used to do stuff based on return from lcd
 
 
 global sPort
@@ -46,6 +51,9 @@ LCDTime = 0
 LCDSlotSelect = ["[0]", "[1]", "[2]", "[3]", "[4]", "[5]", "[6]", "[7]"]
 
 class cPage(object):
+    """
+    this is the stucture of the box on LCD.
+    """
     def __init__(self, pageno=None, boxno=None, boxmsg=None, boxchanged=None, recvdata=None, hotkey=None, ident=None):
         self.pageno = pageno
         self.boxno = boxno
@@ -59,45 +67,46 @@ class cPage(object):
 global Pages
 Pages = []
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# test
+
 
 ###############################################################################
-# exit semi gracefully
-###############################################################################
 def ExitProgram(ExitString):
+    """
+    Exits the program after printing ExitString
+    """
     print(ExitString)
     exit(0)
 
-###############################################################################
-# compute checksum and return (to be used with data sent)
+
 ###############################################################################
 def computeChecksum(value):
-        """
-        ##no idea where I got this from, must have been py2 code as I had
-        to add encoding='utf-8' to the bytearray.
+    """
+    ##no idea where I got this from, must have been py2 code as I had
+    to add encoding='utf-8' to the bytearray.
 
-        Compute a checksum for the specified string.
-        The checksum is computed by XORing the bytes in the string together.
-        Parameters
-        ----------
-        value : string
-            The string to compute the checksum for.
-        Returns
-        -------
-        int
-            The computed checksum.
-        """
-        checksum = 0
-        for byte in bytearray(value, encoding='utf-8'):
-            checksum ^= byte
-        return checksum 
+    Compute a checksum for the specified string.
+    The checksum is computed by XORing the bytes in the string together.
+    Parameters
+    ----------
+    value : string
+        The string to compute the checksum for.
+    Returns
+    -------
+    int
+        The computed checksum.
+    """
+    checksum = 0
+    for byte in bytearray(value, encoding='utf-8'):
+        checksum ^= byte
+    return checksum 
 
 
-###############################################################################
-# list available serial ports
 ###############################################################################
 def listports():
+    """
+    List available serial ports, exits if none available.
+    Otherwise fills lPortlist with port names
+    """
     global lPortlist
     lPortlist = []
     print("available ports below:")
@@ -111,7 +120,14 @@ def listports():
         print(f"{iIter}:", lPortlist[iIter])
 
 
+###############################################################################
 def get_args():
+    """
+    # get port data from the command line
+    # currently overriden (commented out) because VSCode isn't friendly with
+    # passing command line arguments
+
+    """
     global sPort
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--port', action='store', help='port location', default='')
@@ -119,11 +135,18 @@ def get_args():
     
     #override for vscode
     sPort = '/dev/ttyACM0'
+
     #if args.port=='': ExitProgram('\nNo port given, use --port')
     #sPort = args.port
     #print(f'PORT: {args.port}')
 
+
 def sendtime():
+    """
+    Just sends the time to the LCD, using box[0]
+    It doesn't directly send, only sets the data and puts .boxchanged=True
+    sendpage() checks .boxchanged and does the actual sending
+    """
 #    await asyncio.sleep(0.1)
     global lasttime
     global Pages
@@ -154,6 +177,12 @@ def sendtime():
 # *********************************
 
 def CheckDataRecv():
+    """
+    check what data comes from the serial port and break it down into 
+    something that can be worked on.
+    This is the main part of determining what to do if a button is pressed on 
+    the LCD
+    """
     global ser
     global Pages
     sData = str(ser.readline(), 'utf-8')
@@ -175,6 +204,10 @@ def CheckDataRecv():
 
 
 def buildpages():
+    """
+    builds up the array of cPage classes (record structure)
+    this is being done to prevent range check errors if done on the fly.
+    """
     global Pages
     global pagecount
     pagecount = 1 #currently only 1 page
@@ -189,6 +222,10 @@ def buildpages():
 
 
 def sendpage():
+    """
+    If Pages[3].boxchanged then send the data from that page.
+    TODO: need to implement checksum send here
+    """
     global Pages
     global pagecount
     global ser

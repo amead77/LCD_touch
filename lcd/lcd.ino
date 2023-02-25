@@ -182,6 +182,7 @@ void send_header() {
 //# format is: [X]yyy
 //# where X is either A,B,C (commands) or 0..9 (lcd box)
 //# where yyy is the data that comes with it
+//# todo: implement checksum check
 //###############################################################################
 void get_ser_data() {
 	int iData = 0;
