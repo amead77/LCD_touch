@@ -131,7 +131,7 @@ def CheckDataRecv():
             case _:
                 pass
         if sData[2].isnumeric():
-            iIter = int(sData[2])
+            iIter = int(sData[2]) #todo use 2 bytes
             Pages[iIter].recvdata = True
     return sData
 

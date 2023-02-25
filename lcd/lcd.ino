@@ -109,13 +109,15 @@ int numboxes = 7;
 
 
 void setup() {
+	pinMode(XM, OUTPUT);
+	pinMode(YP, OUTPUT);
 	Serial.begin(57600);
 	mylcd.Set_Rotation(0);
 	//rotating doesn't affect touch
 	mylcd.Init_LCD();
 //	Serial.println(mylcd.Read_ID(), HEX);
 	mylcd.Fill_Screen(BLACK);
-	Serial.println(header);
+//	Serial.println(header);
 	for (int ii = 0; ii <= 7; ii++) {
 		//boxdata[ii].iboxnum = ii;
 		boxdata[ii].sboxdata = "";
@@ -229,12 +231,12 @@ void get_ser_data() {
 				case 'A': //define how many boxes (can ignore for now)
 					bData = sData[3];
 					//boxcount = bData.toInt();
-						Serial.println("configurator [boxes]: "+String(boxcount));
-						Serial.println("sData: "+sData);
+					Serial.println("configurator [boxes]: "+String(boxcount));
+					Serial.println("sData: "+sData);
 
 					break;
 				case 'B': //clear screen
-						Serial.println("clr");
+					Serial.println("clr");
 
 					mylcd.Fill_Screen(BLACK);
 					delay(250);
@@ -242,8 +244,8 @@ void get_ser_data() {
 				case 'C': //refresh screen
 						Serial.println("refresh");
 
-					refresh = true;
-					delay(20);
+						refresh = true; //this does nothing. remove or fix
+						delay(20);
 						Serial.println("sData: "+sData);
 
 					if (boxcount > -1) {
@@ -259,42 +261,22 @@ void get_ser_data() {
 					delay(50);
 				default:
 					sButton = sData.substring(3);
-						Serial.println("iButton: "+String(iButton)+" / sButton: "+sButton);
+					Serial.println("iButton: "+String(iButton)+" / sButton: "+sButton);
 					
 					boxdata[iButton].sboxdata = sButton;
 					break;
 			} //switch
-		} //if (iButton > 1) {
+		} //if (iButton >= 0) {
 	} //if (sData.length() > 2) {
 }
 
 
-void loop() {
-	if (firsttime) {
-		//setdisp(); //only used when testing
-		send_header();
-		firsttime = false;
-	}
-	if (debounce != -1) {
-		debounce++;
-	}
-	if (debounce > 15) {
-		debounce=-1;
-		//printboxed(boxmsg[pressed], pressed, 4);
-		lastpressed = -1;
-	}
-	
-	if (Serial.available() > 0) {
-		get_ser_data();
-	}
+void CheckButtonPress() {
 	sendit = false;
 	digitalWrite(13, HIGH);
-	
-	//refactor out somewhere
 	TSPoint p = ts.getPoint();
 	digitalWrite(13, LOW);
-	pinMode(XM, OUTPUT);
-	pinMode(YP, OUTPUT);
+
 	if (p.z > MINPRESSURE && p.z < MAXPRESSURE) {
 		p.x = map(p.x, TS_MINX, TS_MAXX, mylcd.Get_Display_Width(), 0);
 		p.y = map(p.y, TS_MINY, TS_MAXY, mylcd.Get_Display_Height(),0);
@@ -312,12 +294,34 @@ void loop() {
 		if (sendit) {
 			//printboxed(String(pressed), 5, 4);
 			printboxedhighlight(boxdata[pressed].sboxdata, pressed, 4);
-				Serial.println("B*"+leadingzero(pressed)+"$"+boxdata[pressed].sboxdata);
-			delay(200); //remove this, modify below to compensate
+			Serial.println("B*"+leadingzero(pressed)+"$"+boxdata[pressed].sboxdata);
+			delay(200); //remove this, might be fucking the serial data
 			printboxed(boxdata[pressed].sboxdata, pressed, 4);
 		}
 	} //if p.z
+}
+
+void loop() {
+	if (firsttime) {
+		//setdisp(); //only used when testing
+		send_header();
+		firsttime = false;
+	}
+	if (debounce != -1) {
+		debounce++;
+	}
+	if (debounce > 150) {
+		debounce=-1;
+		//printboxed(boxmsg[pressed], pressed, 4);
+		lastpressed = -1;
+	}
 	
-	delay(10); //reduced from 50 because of lag in functions
+	if (Serial.available() > 0) {
+		get_ser_data();
+	}
+	
+	CheckButtonPress(); //refactored from here out to function
+
+	delay(5); //reduced from 50 because of lag in functions
 
 }
