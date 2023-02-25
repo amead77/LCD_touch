@@ -1,21 +1,9 @@
 /*####################################################
 
-# Arduino Touchscreen LCD interface.
-
-# https://github.com/amead77/LCD_touch
-# arduino touchscreen LCD is:
-# https://www.amazon.co.uk/gp/product/B075CXXL1M
-# uses Arduino UNO attached to LCD. 
-# Python sends data to arduino, which puts them into boxes on lcd.
-# LCD detects press and matches to a box, returns that box number
-# Python receives that data then decides what to do with it.
-
-TODO:
--create boxes and keep text in array - mostly done
+ideas:
+-create boxes and keep text in array or defines - mostly done
 
 -implement checksum on received data
--request resend when no match checksum
--find out why data corruption occurs
 
 ####################################################*/
 
@@ -94,7 +82,7 @@ void setup() {
 	mylcd.Init_LCD();
 //	Serial.println(mylcd.Read_ID(), HEX);
 	mylcd.Fill_Screen(BLACK);
-//	Serial.println(header);
+	Serial.println(header);
 	for (int ii = 0; ii <= 7; ii++) {
 		//boxdata[ii].iboxnum = ii;
 		boxdata[ii].sboxdata = "";
@@ -116,6 +104,7 @@ void printboxed(String msgstr, int boxnum, byte boxsize) {
 	mylcd.Set_Text_Size(boxsize);
 	mylcd.Set_Text_colour(YELLOW);
 	mylcd.Print_String(msgstr, sx+4, sy+3);
+	Serial.println("pb-exit");
 }
 
 void printboxedhighlight(String msgstr, int boxnum, byte boxsize) {
@@ -180,20 +169,16 @@ void send_header() {
 //# format is: [X]yyy
 //# where X is either A,B,C (commands) or 0..9 (lcd box)
 //# where yyy is the data that comes with it
-//# todo: implement checksum check
 //###############################################################################
 void get_ser_data() {
 	int iData = 0;
 	int iButton = -1;
-	int chkPos = -1;
-	String chkStr;
 	String iButtType = "A";
 	String sData = "";
 	String bData;
 	String sButton = "";
 	bool isok = false;
 
-	//get the data from the port, ignoring LF or CR
 	while (Serial.available() > 0) {
 		iData = Serial.read();
 		if ((iData != 10) && (iData != 13)) {
@@ -210,7 +195,6 @@ void get_ser_data() {
 
 	if (isok) {
 		iButton = sData.indexOf("]");
-		chkStr = sData.substring(chkPos+1);
 		if (iButton >= 0) {
 			boxcount = 7; //because i don't want to set how many boxes from python "[A]7"
 			bData = sData[1];
@@ -219,12 +203,12 @@ void get_ser_data() {
 				case 'A': //define how many boxes (can ignore for now)
 					bData = sData[3];
 					//boxcount = bData.toInt();
-					Serial.println("configurator [boxes]: "+String(boxcount));
-					Serial.println("sData: "+sData);
+						Serial.println("configurator [boxes]: "+String(boxcount));
+						Serial.println("sData: "+sData);
 
 					break;
 				case 'B': //clear screen
-					Serial.println("clr");
+						Serial.println("clr");
 
 					mylcd.Fill_Screen(BLACK);
 					delay(250);
@@ -249,14 +233,16 @@ void get_ser_data() {
 					delay(50);
 				default:
 					sButton = sData.substring(3);
-					Serial.println("iButton: "+String(iButton)+" / sButton: "+sButton+" / checksum: "+chkStr);
+						Serial.println("iButton: "+String(iButton)+" / sButton: "+sButton);
 					
 					boxdata[iButton].sboxdata = sButton;
 					break;
 			} //switch
-		} //if (iButton >= 0) {
+		} //if (iButton > 1) {
 	} //if (sData.length() > 2) {
 }
+
+
 
 
 void CheckButtonPress() {
@@ -286,12 +272,17 @@ void CheckButtonPress() {
 		if (sendit) {
 			//printboxed(String(pressed), 5, 4);
 			printboxedhighlight(boxdata[pressed].sboxdata, pressed, 4);
-			Serial.println("B*"+leadingzero(pressed)+"$"+boxdata[pressed].sboxdata);
-			delay(200); //remove this, might be fucking the serial data
+				Serial.println("B*"+leadingzero(pressed)+"$"+boxdata[pressed].sboxdata);
+			delay(200); //remove this, modify below to compensate
 			printboxed(boxdata[pressed].sboxdata, pressed, 4);
 		}
 	} //if p.z
-}
+	
+	if (Serial.available() > 0) {
+		get_ser_data();
+	}
+  
+  
 
 void loop() {
 	if (firsttime) {
@@ -302,7 +293,7 @@ void loop() {
 	if (debounce != -1) {
 		debounce++;
 	}
-	if (debounce > 150) {
+	if (debounce > 15) {
 		debounce=-1;
 		//printboxed(boxmsg[pressed], pressed, 4);
 		lastpressed = -1;
@@ -310,7 +301,7 @@ void loop() {
 	
 	if (Serial.available() > 0) {
 		get_ser_data();
-	}
+	}  
 	
 	CheckButtonPress(); //refactored from here out to function
 
