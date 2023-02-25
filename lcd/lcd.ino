@@ -104,7 +104,6 @@ void printboxed(String msgstr, int boxnum, byte boxsize) {
 	mylcd.Set_Text_Size(boxsize);
 	mylcd.Set_Text_colour(YELLOW);
 	mylcd.Print_String(msgstr, sx+4, sy+3);
-	Serial.println("pb-exit");
 }
 
 void printboxedhighlight(String msgstr, int boxnum, byte boxsize) {
