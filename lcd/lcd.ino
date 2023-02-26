@@ -11,7 +11,9 @@
 
 TODO:
 -implement checksum on received data / line ~227
-
+-big changes:
+	change box pos to python defined
+	refresh only box changed
 ####################################################*/
 
 
@@ -59,9 +61,13 @@ typedef struct s_boxdef {
 typedef struct s_boxdata {
 	int iboxnum; //not actually required, array position will set
 	String sboxdata;
+	int startx;
+	int starty;
+	int endx;
+	int endy;
 };
 
-s_boxdef boxno[6] = {{1,1,319, 45}, {1,47,319, 92}, {1,94,319, 139}, {1,141,319, 186}, {1,188,319, 233}, {1,235,319, 280}};
+//s_boxdef boxno[6] = {{1,1,319, 45}, {1,47,319, 92}, {1,94,319, 139}, {1,141,319, 186}, {1,188,319, 233}, {1,235,319, 280}};
 //String boxmsg[6] = {"TEST 00", "TEST 01", "TEST 02", "TEST 03", "TEST 04", "TEST 05", "TEST 06"};
 //s_boxdef timeplace = {1,1,319,45};
 
@@ -92,16 +98,20 @@ void setup() {
 	
 	//initialise boxdata
 	for (int ii = 0; ii <= 7; ii++) {
-		//boxdata[ii].iboxnum = ii;
 		boxdata[ii].sboxdata = "";
+		boxdata[ii].iboxnum = ii;
+		boxdata[ii].startx = 0;
+		boxdata[ii].starty = 0;
+		boxdata[ii].endx = 0;
+		boxdata[ii].endy = 0;
 	}
 }
 
 void printboxed(String msgstr, int boxnum, byte boxsize) {
-	int sx = boxno[boxnum].startx;
-	int sy = boxno[boxnum].starty;
-	int ex = boxno[boxnum].endx;
-	int ey = boxno[boxnum].endy;
+	int sx = boxdata[boxnum].startx;
+	int sy = boxdata[boxnum].starty;
+	int ex = boxdata[boxnum].endx;
+	int ey = boxdata[boxnum].endy;
 //	int msglen = msgstr.length() * 13;
 	mylcd.Set_Text_Back_colour(BLACK);
     mylcd.Set_Draw_color(YELLOW);
@@ -115,10 +125,10 @@ void printboxed(String msgstr, int boxnum, byte boxsize) {
 }
 
 void printboxedhighlight(String msgstr, int boxnum, byte boxsize) {
-	int sx = boxno[boxnum].startx;
-	int sy = boxno[boxnum].starty;
-	int ex = boxno[boxnum].endx;
-	int ey = boxno[boxnum].endy;
+	int sx = boxdata[boxnum].startx;
+	int sy = boxdata[boxnum].starty;
+	int ex = boxdata[boxnum].endx;
+	int ey = boxdata[boxnum].endy;
 	mylcd.Set_Text_Back_colour(YELLOW);
     mylcd.Set_Draw_color(YELLOW);
 	mylcd.Fill_Rectangle(sx,sy,ex,ey);  	
@@ -164,7 +174,7 @@ int boxnum(int px, int py) {
 	String buildstr;
 	for (int bx=0; bx < numboxes; bx++) {
 		buildstr=">"+String(bx);
-		if ((px >= boxno[bx].startx) && (px <= boxno[bx].endx) && (py >= boxno[bx].starty) && (py <= boxno[bx].endy)) {
+		if ((px >= boxdata[bx].startx) && (px <= boxdata[bx].endx) && (py >= boxdata[bx].starty) && (py <= boxdata[bx].endy)) {
 			return bx;
 			break;
 		}
@@ -193,6 +203,52 @@ int computeChecksum(String svalue) {
 		checksum ^= chkByte;
 	}
 	return checksum;
+}
+
+
+void cmdDefault(int ibox, String sData) {
+/**
+ * set box/button data
+ * first 12 chars are position
+ * 
+*/
+	String sWork;
+	sWork = sData.substring(0,2);
+	boxdata[ibox].startx = sWork.toInt();
+	sWork = sData.substring(3,5);
+	boxdata[ibox].starty = sWork.toInt();
+	sWork = sData.substring(6,8);
+	boxdata[ibox].endx = sWork.toInt();
+	sWork = sData.substring(9,11);
+	boxdata[ibox].endy = sWork.toInt();
+	boxdata[ibox].sboxdata = sData.substring(12);
+}
+
+void cmdB() {
+	Serial.println("clr");
+	mylcd.Fill_Screen(BLACK);
+	delay(250);
+}
+
+void cmdC() {
+	/**
+	 * TODO: there is no reason to update ALL boxes every time.
+	 * change python side to include a box number
+	 * change here to check for box number.
+	 * OR, change the default switch and type structure to include a 'changed'
+	 * ex: boxdata[iButton].changed = true;
+	*/
+	Serial.println("refresh");
+	for (int ii = 0; ii < boxcount; ii++) {
+		printboxed(boxdata[ii].sboxdata, ii, 4);
+		Serial.println("boxdata: "+boxdata[ii].sboxdata);
+		delay(5); //25
+	}
+}
+
+void cmdD() {
+	send_header();
+	delay(50);
 }
 
 void get_ser_data() {
@@ -227,18 +283,23 @@ void get_ser_data() {
 	 * TODO: move checksum checks to here, break up sData string and ask resend if incorrect.
 	*/
 
+	/*
 	chkPos = sData.indexOf("!");
 	
 	isok = (sData.length() > 2) ? true : false;
 	isok = (true && (chkPos > 0)) ? true : false;
 	isok = (true && (chkPos < sData.length())) ? true : false;
+	*/
+
+	isok = (sData.length() > 2) ? true : false;
+	iButton = sData.indexOf("]");
+	isok = (true && (iButton >= 0)) ? true : false;
 
 	if (isok) {
-		chkData = sData.substring(0, chkPos);
-		checks = computeChecksum(chkData);
-		iButton = sData.indexOf("]");
+//		chkData = sData.substring(0, chkPos);
+//		checks = computeChecksum(chkData);
 		if (iButton >= 0) {
-			boxcount = 7; //because i don't want to set how many boxes from python "[A]7"
+			boxcount = 7; //because i don't want to set how many boxes from python yet "[A]7"
 			bData = sData[1];
 			iButton = bData.toInt(); //cannot use sData[1].toInt() as it extracts a char, but toInt() is only avail on string.
 			switch (sData[1]) {
@@ -250,41 +311,23 @@ void get_ser_data() {
 
 					break;
 				case 'B': //clear screen
-						Serial.println("clr");
-
-					mylcd.Fill_Screen(BLACK);
-					delay(250);
+					cmdB();
 					break;
 				case 'C': //refresh screen
-					Serial.println("refresh");
-
-					refresh = true; //this does nothing. remove or fix
-					delay(20);
-					Serial.println("sData: "+sData);
-
 					if (boxcount > -1) {
-						/**
-						 * TODO: there is no reason to update ALL boxes every time.
-						 * change python side to include a box number
-						 * change here to check for box number.
-						 * OR, change the default switch and type structure to include a 'changed'
-						 * ex: boxdata[iButton].changed = true;
-						*/
-						for (int ii = 0; ii < boxcount; ii++) {
-							printboxed(boxdata[ii].sboxdata, ii, 4);
-							Serial.println("boxdata: "+boxdata[ii].sboxdata+" chk: "+String(checks)+" chkdata: "+chkData);
-							delay(5); //25
-						}
-					} //if (boxcount > -1) {
+						cmdC();
+					}
 					break;
 				case 'D': //send simple lcd/arduino header info for id dev.
-					send_header();
-					delay(50);
+					cmdD();
+					break;
 				default:
-					sButton = sData.substring(3, chkPos);
-					Serial.println("iButton: "+String(iButton)+" / sButton: "+sButton);
-					
-					boxdata[iButton].sboxdata = sButton;
+				/**
+				 * not a command so must be a box data
+				*/
+					if (sData.length() >= 12) {
+						cmdDefault(iButton, sData);
+					}
 					break;
 			} //switch
 		} //if (iButton > 1) {
