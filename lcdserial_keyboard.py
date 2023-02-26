@@ -55,11 +55,13 @@ LCDSlots = 7
 LCDTime = 0
 LCDSlotSelect = ["[0]", "[1]", "[2]", "[3]", "[4]", "[5]", "[6]", "[7]"]
 
+
+
 class cPage(object):
     """
     this is the stucture of the box on LCD.
     """
-    def __init__(self, pageno=None, boxno=None, boxmsg=None, boxchanged=None, recvdata=None, hotkey=None, ident=None):
+    def __init__(self, pageno=None, boxno=None, boxmsg=None, boxchanged=None, recvdata=None, hotkey=None, ident=None, sx=None, sy=None, ex=None, ey=None):
         self.pageno = pageno
         self.boxno = boxno
         self.boxmsg = boxmsg
@@ -67,6 +69,10 @@ class cPage(object):
         self.recvdata = recvdata
         self.hotkey = hotkey
         self.ident = ident
+        self.startx = sx
+        self.starty = sy
+        self.endx = ex
+        self.endy = ey
 
 
 global Pages
@@ -160,7 +166,7 @@ def sendtime():
     
     if dt_string != lasttime:
         lasttime = dt_string
-        print(f"DT:{dt_string} LT:{lasttime}")
+        #print(f"DT:{dt_string} LT:{lasttime}")
         #dt_string=LCDSlotSelect[LCDTime]+dt_string
         
         Pages[0].pageno = 0
@@ -169,7 +175,7 @@ def sendtime():
         Pages[0].boxchanged = True
         Pages[0].recvdata = False
         Pages[0].hotkey = "None"
-        Pages[0].ident = "B*0"
+#        Pages[0].ident = "B*0"
 
         #ser.write(dt_string.encode('utf-8'))
         #time.sleep(0.3)
@@ -216,15 +222,16 @@ def buildpages():
     global Pages
     global pagecount
     pagecount = 1 #currently only 1 page
-    Pages.append(cPage(0,0,"msg0/0", True, False, "None", "B*00")) #ignored as clock in ere
-    Pages.append(cPage(0,1,"msg0/1", True, False, "None", "B*01"))
-    Pages.append(cPage(0,2,"msg0/2", True, False, "None", "B*02"))
-    Pages.append(cPage(0,3,"msg0/3", True, False, "None", "B*03"))
-    Pages.append(cPage(0,4,"msg0/4", True, False, "None", "B*04"))
-    Pages.append(cPage(0,5,"msg0/5", True, False, "None", "B*05"))
-    Pages.append(cPage(0,6,"msg0/6", True, False, "None", "B*06"))
-    Pages.append(cPage(0,7,"msg0/7", True, False, "None", "B*07"))
+    Pages.append(cPage(0,0,"msg0/0", True, False, "None", "B*00", 1,   1, 319,  45)) #ignored as clock in ere
+    Pages.append(cPage(0,1,"msg0/1", True, False, "None", "B*01", 1,  47, 319,  92))
+    Pages.append(cPage(0,2,"msg0/2", True, False, "None", "B*02", 1,  94, 319, 139))
+    Pages.append(cPage(0,3,"msg0/3", True, False, "None", "B*03", 1, 141, 319, 186))
+    Pages.append(cPage(0,4,"msg0/4", True, False, "None", "B*04", 1, 188, 319, 233))
+    Pages.append(cPage(0,5,"msg0/5", True, False, "None", "B*05", 1, 235, 319, 280))
+    Pages.append(cPage(0,6,"msg0/6", True, False, "None", "B*06", 1, 319,   1, 300))
+    Pages.append(cPage(0,7,"msg0/7", True, False, "None", "B*07", 1, 319,   1, 300))
 
+#s_boxdef boxno[6] = {{1,1,319, 45}, {1,47,319, 92}, {1,94,319, 139}, {1,141,319, 186}, {1,188,319, 233}, {1,235,319, 280}};
 
 def sendpage():
     """
@@ -242,9 +249,16 @@ def sendpage():
             if (Pages[iIter].boxchanged == True):
                 Pages[iIter].boxchanged = False
                 hasupdate = True
-                strtmp = '['+str(Pages[iIter].boxno)+']'+Pages[iIter].boxmsg
+                strtmp = '['+str(Pages[iIter].boxno)+']'
+                strtmp += str(Pages[iIter].startx).zfill(3)
+                strtmp += str(Pages[iIter].starty).zfill(3)
+                strtmp += str(Pages[iIter].endx).zfill(3)
+                strtmp += str(Pages[iIter].endy).zfill(3)
+                strtmp += Pages[iIter].boxmsg
+                print("->"+strtmp)
+
                 #compute and add checksum after !
-                strtmp += '!'+str(computeChecksum(strtmp))
+#                strtmp += '!'+str(computeChecksum(strtmp))
                 ser.write(strtmp.encode('utf-8'))
                 time.sleep(0.125)
     if hasupdate:

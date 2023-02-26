@@ -212,15 +212,10 @@ void cmdDefault(int ibox, String sData) {
  * first 12 chars are position
  * 
 */
-	String sWork;
-	sWork = sData.substring(0,2);
-	boxdata[ibox].startx = sWork.toInt();
-	sWork = sData.substring(3,5);
-	boxdata[ibox].starty = sWork.toInt();
-	sWork = sData.substring(6,8);
-	boxdata[ibox].endx = sWork.toInt();
-	sWork = sData.substring(9,11);
-	boxdata[ibox].endy = sWork.toInt();
+	boxdata[ibox].startx = sData.substring(0,2).toInt();
+	boxdata[ibox].starty = sData.substring(3,5).toInt();
+	boxdata[ibox].endx = sData.substring(6,8).toInt();
+	boxdata[ibox].endy = sData.substring(9,11).toInt();
 	boxdata[ibox].sboxdata = sData.substring(12);
 }
 
@@ -384,6 +379,8 @@ void CheckButtonPress() {
 void loop() {
 	if (firsttime) {
 		//setdisp(); //only used when testing
+		Serial.println("ft");
+		delay(5);
 		send_header();
 		firsttime = false;
 	}
