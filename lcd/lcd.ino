@@ -10,7 +10,7 @@
 #
 
 TODO:
--implement checksum on received data / line ~227
+-implement checksum on received data
 -big changes:
 	change box pos to python defined
 	refresh only box changed

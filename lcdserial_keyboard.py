@@ -11,7 +11,7 @@
 # TODO: if data not match checksum, arduino should request resend.
 # TODO: find out why corruption happens in first place. Probably due to IO
 #       blocking when using delay() and LCD routines.
-#
+# TODO: Check LCD header is received and correct before sending data.
 #
 # notes:
 #   anyone reading this and lcd/lcd.ino will see I've tried various stuff
