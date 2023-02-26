@@ -102,23 +102,33 @@ void printboxed(String msgstr, int boxnum, byte boxsize) {
 	int ex = boxdata[boxnum].endx;
 	int ey = boxdata[boxnum].endy;
 
-//	Serial.println("sx:"+String(sx)+" sy:"+String(sy)+" ex:"+String(ex)+" ey:"+String(ey));
-	Serial.println("in printboxed() msgstr: "+msgstr);
-	delay(10);
+	Serial.println("msgstr in printboxed(): "+msgstr+"!sx:"+String(sx)+" sy:"+String(sy)+" ex:"+String(ex)+" ey:"+String(ey));
+	delay(20);
 //some fuckery is happening here. adding the above delay allows me to see it got this far
 //but then craps out
 	mylcd.Set_Text_Back_colour(BLACK);
+	Serial.println("1a");
     mylcd.Set_Draw_color(YELLOW);
-    mylcd.Set_Draw_color(BLACK);
+	Serial.println("1b");
+    //mylcd.Set_Draw_color(BLACK);
+	Serial.println("1c");
+	//Fill is the problem, but worked before. wtf bitrot is this
 	mylcd.Fill_Rectangle(sx,sy,ex,ey);  	
+	Serial.println("1d");
+	delay(20);
     mylcd.Set_Draw_color(YELLOW);
 	mylcd.Draw_Rectangle(sx,sy,ex,ey);  	
+	Serial.println("2");
+	delay(20);
 	mylcd.Set_Text_Size(boxsize);
 	mylcd.Set_Text_colour(YELLOW);
 	mylcd.Print_String(msgstr, sx+4, sy+3);
+	Serial.println("3");
+	delay(20);
 	Serial.println("exit printboxed()");
-	delay(10);
+	delay(20);
 }
+
 
 void printboxedhighlight(String msgstr, int boxnum, byte boxsize) {
 	int sx = boxdata[boxnum].startx;
