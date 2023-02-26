@@ -163,6 +163,20 @@ void send_header() {
 	Serial.println(header);
 }
 
+void computeChecksum(String svalue) {
+/**
+ * calculates a checksum by xor the string 'value'
+ * returns integer
+ **/	
+	int checksum = 0;
+	byte chkByte = 0;
+	for (int x = 0; x < svalue.length(); x++) {
+		chkByte = byte(svalue[x]);
+		checksum ^= chkByte;
+	}
+	return checksum;
+}
+
 //###############################################################################
 //# receives data from serial
 //# format is: [X]yyy
@@ -177,6 +191,9 @@ void get_ser_data() {
 	String bData;
 	String sButton = "";
 	bool isok = false;
+	int chkPos;
+	String chkData;
+	int checks = 0;
 
 	while (Serial.available() > 0) {
 		iData = Serial.read();
@@ -193,6 +210,8 @@ void get_ser_data() {
 	isok = (true && (chkPos < sData.length())) ? true : false;
 
 	if (isok) {
+		chkData = sData.substring(0, chkPos);
+		//checks = computeChecksum(chkData);
 		iButton = sData.indexOf("]");
 		if (iButton >= 0) {
 			boxcount = 7; //because i don't want to set how many boxes from python "[A]7"
@@ -281,7 +300,7 @@ void CheckButtonPress() {
 		get_ser_data();
 	}
   
-  
+}  
 
 void loop() {
 	if (firsttime) {
