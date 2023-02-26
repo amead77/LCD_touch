@@ -14,4 +14,4 @@ LCD: https://www.amazon.co.uk/gp/product/B075CXXL1M
 
 libs for the LCD: https://github.com/tedead/Kuman-SC3A
 
-[lcd](IMG_0188.jpeg)
+![lcd](IMG_0188.jpeg)
