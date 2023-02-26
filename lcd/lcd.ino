@@ -51,13 +51,6 @@ TouchScreen ts = TouchScreen(XP, YP, XM, YM, 300);
 
 #define header "-LCD0-"
 
-typedef struct s_boxdef {
-	int startx;
-	int starty;
-	int endx;
-	int endy;
-};
-
 typedef struct s_boxdata {
 	int iboxnum; //not actually required, array position will set
 	String sboxdata;
@@ -66,10 +59,6 @@ typedef struct s_boxdata {
 	int endx;
 	int endy;
 };
-
-//s_boxdef boxno[6] = {{1,1,319, 45}, {1,47,319, 92}, {1,94,319, 139}, {1,141,319, 186}, {1,188,319, 233}, {1,235,319, 280}};
-//String boxmsg[6] = {"TEST 00", "TEST 01", "TEST 02", "TEST 03", "TEST 04", "TEST 05", "TEST 06"};
-//s_boxdef timeplace = {1,1,319,45};
 
 s_boxdata boxdata[7];
 
@@ -112,6 +101,10 @@ void printboxed(String msgstr, int boxnum, byte boxsize) {
 	int sy = boxdata[boxnum].starty;
 	int ex = boxdata[boxnum].endx;
 	int ey = boxdata[boxnum].endy;
+
+	Serial.println("sx:"+String(sx)+" sy:"+String(sy)+" ex:"+String(ex)+" ey:"+String(ey));
+	Serial.println("msgstr: "+msgstr);
+	delay(100);
 //	int msglen = msgstr.length() * 13;
 	mylcd.Set_Text_Back_colour(BLACK);
     mylcd.Set_Draw_color(YELLOW);
@@ -217,13 +210,16 @@ void cmdDefault(int ibox, String sData) {
 	boxdata[ibox].endx = sData.substring(6,8).toInt();
 	boxdata[ibox].endy = sData.substring(9,11).toInt();
 	boxdata[ibox].sboxdata = sData.substring(12);
+	Serial.println("<-"+sData);
 }
+
 
 void cmdB() {
 	Serial.println("clr");
 	mylcd.Fill_Screen(BLACK);
 	delay(250);
 }
+
 
 void cmdC() {
 	/**
@@ -234,6 +230,7 @@ void cmdC() {
 	 * ex: boxdata[iButton].changed = true;
 	*/
 	Serial.println("refresh");
+	delay(100);
 	for (int ii = 0; ii < boxcount; ii++) {
 		printboxed(boxdata[ii].sboxdata, ii, 4);
 		Serial.println("boxdata: "+boxdata[ii].sboxdata);
@@ -241,10 +238,12 @@ void cmdC() {
 	}
 }
 
+
 void cmdD() {
 	send_header();
 	delay(50);
 }
+
 
 void get_ser_data() {
 /**
