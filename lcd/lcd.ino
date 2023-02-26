@@ -1,18 +1,20 @@
 /*####################################################
 
-ideas:
--create boxes and keep text in array or defines - mostly done
+# https://github.com/amead77/LCD_touch
+# arduino touchscreen LCD is:
+# https://www.amazon.co.uk/gp/product/B075CXXL1M
+# uses Arduino UNO attached to LCD. 
+# Python sends data to arduino, which puts them into boxes on lcd.
+# LCD detects press and matches to a box, returns that box number
+# Python receives that data then decides what to do with it.
+#
 
--implement checksum on received data
+TODO:
+-implement checksum on received data / line ~227
 
 ####################################################*/
 
 
-//
-//
-//  320x480 in portrait with usb at top
-//
-//
 #include <LCDWIKI_GUI.h> //Core graphics library
 #include <LCDWIKI_KBV.h> //Hardware-specific library
 #include "TouchScreen.h" // only when you want to use touch screen 
@@ -76,13 +78,19 @@ int numboxes = 7;
 
 
 void setup() {
-	Serial.begin(57600);
+	Serial.begin(57600); //115200 was causing corruption, slower wasn't really fast enough
 	mylcd.Set_Rotation(0);
-	//rotating doesn't affect touch
+//rotating doesn't affect touch. Keep orientaion in the same direction or you'll drive yourself crazy.
+//
+//  320x480 in portrait with usb at top
+//
 	mylcd.Init_LCD();
+
 //	Serial.println(mylcd.Read_ID(), HEX);
 	mylcd.Fill_Screen(BLACK);
-	Serial.println(header);
+	//Serial.println(header);
+	
+	//initialise boxdata
 	for (int ii = 0; ii <= 7; ii++) {
 		//boxdata[ii].iboxnum = ii;
 		boxdata[ii].sboxdata = "";
@@ -120,6 +128,9 @@ void printboxedhighlight(String msgstr, int boxnum, byte boxsize) {
 }
 
 String leadingzero(byte tx) {
+/**
+ * returns a string from byte tx, if 0..9, includes a leading zero.
+ */
 	String lz="0";
 	if (tx < 10) {
 		lz+=String(tx);
@@ -137,16 +148,19 @@ void setdisp() {
 }
 
 void dispcoord(int xx, int yy) {
+/**
+ * used in debugging, prints xx,yy at location
+*/
 	mylcd.Set_Text_colour(GREEN);
 	mylcd.Print_Number_Int(xx, 0, 200, 3, ' ',10);
 	mylcd.Print_Number_Int(yy, 0, 220, 3, ' ',10);
 }
 
 
-//###############################################################################
-//# maps x,y co-ords to onscreen box
-//###############################################################################
 int boxnum(int px, int py) {
+/**
+ * maps x,y co-ords to onscreen box
+*/
 	String buildstr;
 	for (int bx=0; bx < numboxes; bx++) {
 		buildstr=">"+String(bx);
@@ -160,10 +174,14 @@ int boxnum(int px, int py) {
 
 
 void send_header() {
+/**
+ * sends header info to serial port
+*/
 	Serial.println(header);
 }
 
-void computeChecksum(String svalue) {
+
+int computeChecksum(String svalue) {
 /**
  * calculates a checksum by xor the string 'value'
  * returns integer
@@ -177,13 +195,14 @@ void computeChecksum(String svalue) {
 	return checksum;
 }
 
-//###############################################################################
-//# receives data from serial
-//# format is: [X]yyy
-//# where X is either A,B,C (commands) or 0..9 (lcd box)
-//# where yyy is the data that comes with it
-//###############################################################################
 void get_ser_data() {
+/**
+* receives data from serial
+* format is: [X]yyy
+* where X is either A,B,C (commands) or 0..9 (lcd box)
+* where yyy is the data that comes with it
+*/
+
 	int iData = 0;
 	int iButton = -1;
 	String iButtType = "A";
@@ -203,6 +222,11 @@ void get_ser_data() {
 			break;
 		}
 	} //while
+
+	/**
+	 * TODO: move checksum checks to here, break up sData string and ask resend if incorrect.
+	*/
+
 	chkPos = sData.indexOf("!");
 	
 	isok = (sData.length() > 2) ? true : false;
@@ -211,15 +235,15 @@ void get_ser_data() {
 
 	if (isok) {
 		chkData = sData.substring(0, chkPos);
-		//checks = computeChecksum(chkData);
+		checks = computeChecksum(chkData);
 		iButton = sData.indexOf("]");
 		if (iButton >= 0) {
 			boxcount = 7; //because i don't want to set how many boxes from python "[A]7"
 			bData = sData[1];
-			iButton = bData.toInt();
+			iButton = bData.toInt(); //cannot use sData[1].toInt() as it extracts a char, but toInt() is only avail on string.
 			switch (sData[1]) {
 				case 'A': //define how many boxes (can ignore for now)
-					bData = sData[3];
+					//bData = sData[3];
 					//boxcount = bData.toInt();
 						Serial.println("configurator [boxes]: "+String(boxcount));
 						Serial.println("sData: "+sData);
@@ -239,10 +263,17 @@ void get_ser_data() {
 					Serial.println("sData: "+sData);
 
 					if (boxcount > -1) {
+						/**
+						 * TODO: there is no reason to update ALL boxes every time.
+						 * change python side to include a box number
+						 * change here to check for box number.
+						 * OR, change the default switch and type structure to include a 'changed'
+						 * ex: boxdata[iButton].changed = true;
+						*/
 						for (int ii = 0; ii < boxcount; ii++) {
 							printboxed(boxdata[ii].sboxdata, ii, 4);
-							Serial.println("boxdata: "+boxdata[ii].sboxdata);
-							delay(25);
+							Serial.println("boxdata: "+boxdata[ii].sboxdata+" chk: "+String(checks)+" chkdata: "+chkData);
+							delay(5); //25
 						}
 					} //if (boxcount > -1) {
 					break;
@@ -250,8 +281,8 @@ void get_ser_data() {
 					send_header();
 					delay(50);
 				default:
-					sButton = sData.substring(3);
-						Serial.println("iButton: "+String(iButton)+" / sButton: "+sButton);
+					sButton = sData.substring(3, chkPos);
+					Serial.println("iButton: "+String(iButton)+" / sButton: "+sButton);
 					
 					boxdata[iButton].sboxdata = sButton;
 					break;
@@ -260,10 +291,10 @@ void get_ser_data() {
 	} //if (sData.length() > 2) {
 }
 
-
-
-
 void CheckButtonPress() {
+/**
+ * check for LCD press, map to xy coords. if match box pos, highlight box
+ */
 	sendit = false;
 	//-------here
 	digitalWrite(13, HIGH);
@@ -290,18 +321,23 @@ void CheckButtonPress() {
 		if (sendit) {
 			//printboxed(String(pressed), 5, 4);
 			printboxedhighlight(boxdata[pressed].sboxdata, pressed, 4);
-				Serial.println("B*"+leadingzero(pressed)+"$"+boxdata[pressed].sboxdata);
+			Serial.println("B*"+leadingzero(pressed)+"$"+boxdata[pressed].sboxdata);
+
+			/**
+			 * TODO: remove this delay, find another way.
+			*/
 			delay(200); //remove this, modify below to compensate
+
 			printboxed(boxdata[pressed].sboxdata, pressed, 4);
 		}
 	} //if p.z
-	
-	if (Serial.available() > 0) {
-		get_ser_data();
-	}
-  
 }  
 
+
+
+//###############################################################################
+//# main
+//###############################################################################
 void loop() {
 	if (firsttime) {
 		//setdisp(); //only used when testing
@@ -311,7 +347,7 @@ void loop() {
 	if (debounce != -1) {
 		debounce++;
 	}
-	if (debounce > 15) {
+	if (debounce > 100) { //100-150 if delay(10)
 		debounce=-1;
 		//printboxed(boxmsg[pressed], pressed, 4);
 		lastpressed = -1;
@@ -323,6 +359,6 @@ void loop() {
 	
 	CheckButtonPress(); //refactored from here out to function
 
-	delay(10); //reduced from 50 because of lag in functions
+	delay(10); //no delay causes no data to be received over serial?!?!
 
 }
