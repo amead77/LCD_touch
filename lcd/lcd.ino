@@ -62,7 +62,7 @@ typedef struct s_boxdata {
 
 s_boxdata boxdata[7];
 
-int boxcount = -1;
+int boxcount = 7;
 int debounce = 0;
 int lastpressed = -1;
 int pressed = -1;
@@ -102,10 +102,11 @@ void printboxed(String msgstr, int boxnum, byte boxsize) {
 	int ex = boxdata[boxnum].endx;
 	int ey = boxdata[boxnum].endy;
 
-	Serial.println("sx:"+String(sx)+" sy:"+String(sy)+" ex:"+String(ex)+" ey:"+String(ey));
-	Serial.println("msgstr: "+msgstr);
-	delay(100);
-//	int msglen = msgstr.length() * 13;
+//	Serial.println("sx:"+String(sx)+" sy:"+String(sy)+" ex:"+String(ex)+" ey:"+String(ey));
+	Serial.println("in printboxed() msgstr: "+msgstr);
+	delay(10);
+//some fuckery is happening here. adding the above delay allows me to see it got this far
+//but then craps out
 	mylcd.Set_Text_Back_colour(BLACK);
     mylcd.Set_Draw_color(YELLOW);
     mylcd.Set_Draw_color(BLACK);
@@ -115,6 +116,8 @@ void printboxed(String msgstr, int boxnum, byte boxsize) {
 	mylcd.Set_Text_Size(boxsize);
 	mylcd.Set_Text_colour(YELLOW);
 	mylcd.Print_String(msgstr, sx+4, sy+3);
+	Serial.println("exit printboxed()");
+	delay(10);
 }
 
 void printboxedhighlight(String msgstr, int boxnum, byte boxsize) {
@@ -205,12 +208,18 @@ void cmdDefault(int ibox, String sData) {
  * first 12 chars are position
  * 
 */
-	boxdata[ibox].startx = sData.substring(0,2).toInt();
-	boxdata[ibox].starty = sData.substring(3,5).toInt();
-	boxdata[ibox].endx = sData.substring(6,8).toInt();
-	boxdata[ibox].endy = sData.substring(9,11).toInt();
+	boxdata[ibox].startx = sData.substring(0,3).toInt();
+	//Serial.println(sData.substring(0,3));
+	boxdata[ibox].starty = sData.substring(3,6).toInt();
+	//Serial.println(sData.substring(3,6));
+	boxdata[ibox].endx = sData.substring(6,9).toInt();
+	//Serial.println(sData.substring(6,9));
+	boxdata[ibox].endy = sData.substring(9,12).toInt();
+	//Serial.println(sData.substring(9,12));
 	boxdata[ibox].sboxdata = sData.substring(12);
-	Serial.println("<-"+sData);
+	//Serial.println(sData.substring(12));
+	Serial.println("<-"+sData+" # "+String(boxdata[ibox].startx)+":"+String(boxdata[ibox].starty)+":"+String(boxdata[ibox].endx)+":"+String(boxdata[ibox].endy)+">"+boxdata[ibox].sboxdata);
+	delay(10);
 }
 
 
@@ -293,7 +302,7 @@ void get_ser_data() {
 //		chkData = sData.substring(0, chkPos);
 //		checks = computeChecksum(chkData);
 		if (iButton >= 0) {
-			boxcount = 7; //because i don't want to set how many boxes from python yet "[A]7"
+			//boxcount = 7; //because i don't want to set how many boxes from python yet "[A]7"
 			bData = sData[1];
 			iButton = bData.toInt(); //cannot use sData[1].toInt() as it extracts a char, but toInt() is only avail on string.
 			switch (sData[1]) {
@@ -320,7 +329,7 @@ void get_ser_data() {
 				 * not a command so must be a box data
 				*/
 					if (sData.length() >= 12) {
-						cmdDefault(iButton, sData);
+						cmdDefault(iButton, sData.substring(3));
 					}
 					break;
 			} //switch
