@@ -17,8 +17,8 @@ TODO:
 ####################################################*/
 
 
-#include <LCDWIKI_GUI.h> //Core graphics library
-#include <LCDWIKI_KBV.h> //Hardware-specific library
+#include "LCDWIKI_GUI.h" //Core graphics library
+#include "LCDWIKI_KBV.h" //Hardware-specific library
 #include "TouchScreen.h" // only when you want to use touch screen 
 //if the IC model is known or the modules is unreadable,you can use this constructed function
 LCDWIKI_KBV mylcd(ILI9486,A3,A2,A1,A0,A4); //model,cs,cd,wr,rd,reset
@@ -103,7 +103,7 @@ void printboxed(String msgstr, int boxnum, byte boxsize) {
 	int ey = boxdata[boxnum].endy;
 
 	Serial.println("msgstr in printboxed(): "+msgstr+"!sx:"+String(sx)+" sy:"+String(sy)+" ex:"+String(ex)+" ey:"+String(ey));
-	delay(20);
+	delay(50);
 //some fuckery is happening here. adding the above delay allows me to see it got this far
 //but then craps out
 	mylcd.Set_Text_Back_colour(BLACK);
@@ -113,20 +113,25 @@ void printboxed(String msgstr, int boxnum, byte boxsize) {
     //mylcd.Set_Draw_color(BLACK);
 	Serial.println("1c");
 	//Fill is the problem, but worked before. wtf bitrot is this
+	//attacking the cpp lib hasn't helped. LCDWIKI_KBV.cpp causes glitches when
+	//trying to inspect what it's doing. Either the serial input works or I
+	//see some debugging data, not both. trying to put delays in the cpp
+	//causes corruption of incoming data.
+	//at this point i'm ready to punt this lcd down the garden.
 	mylcd.Fill_Rectangle(sx,sy,ex,ey);  	
 	Serial.println("1d");
-	delay(20);
+	delay(50);
     mylcd.Set_Draw_color(YELLOW);
 	mylcd.Draw_Rectangle(sx,sy,ex,ey);  	
 	Serial.println("2");
-	delay(20);
+	delay(50);
 	mylcd.Set_Text_Size(boxsize);
 	mylcd.Set_Text_colour(YELLOW);
 	mylcd.Print_String(msgstr, sx+4, sy+3);
 	Serial.println("3");
-	delay(20);
+	delay(50);
 	Serial.println("exit printboxed()");
-	delay(20);
+	delay(50);
 }
 
 
