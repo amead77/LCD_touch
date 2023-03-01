@@ -8,3 +8,17 @@
 /home/adam/Programming/LCD_touch/Touchscreen.h
 /home/adam/Programming/LCD_touch/libraries
 __pycache__/
+lcd/lcd_mode.h
+lcd/lcd_registers.h
+lcd/LCDWIKI_font.c
+lcd/LCDWIKI_GUI.cpp
+lcd/LCDWIKI_GUI.h
+.gitignore
+lcd/LCDWIKI_KBV.cpp
+lcd/LCDWIKI_KBV.h
+lcd/mcu_8bit_magic.h
+lcd/mcu_16bit_magic.h
+.gitignore
+lcd/TouchScreen.cpp
+.gitignore
+lcd/TouchScreen.h
