@@ -14,6 +14,23 @@ TODO:
 -big changes:
 	change box pos to python defined
 	refresh only box changed
+
+BUGS:
+-everything
+-my life
+-i hate this so much
+-	//Fill is the problem, but worked before. wtf bitrot is this
+	//attacking the cpp lib hasn't helped. LCDWIKI_KBV.cpp causes glitches when
+	//trying to inspect what it's doing. Either the serial input works or I
+	//see some debugging data, not both. trying to put delays in the cpp
+	//causes corruption of incoming data.
+	//at this point i'm ready to punt this lcd down the garden.
+-I've removed all unnessisary delays and serial.println, still it 
+	fails.
+	Resets on trying to printboxed(), yet the other branches this works.
+
+-OMG was it zeros as xy co-ords that was the problem? 
+NO, IT'S ME, I'M THE PROBLEM IT'S ME. but also the zeros
 ####################################################*/
 
 
@@ -103,43 +120,38 @@ void printboxed(String msgstr, int boxnum, byte boxsize) {
 	int ey = boxdata[boxnum].endy;
 
 	Serial.println("msgstr in printboxed(): "+msgstr+"!sx:"+String(sx)+" sy:"+String(sy)+" ex:"+String(ex)+" ey:"+String(ey));
-	delay(50);
+	delay(100);
 //some fuckery is happening here. adding the above delay allows me to see it got this far
 //but then craps out
 	mylcd.Set_Text_Back_colour(BLACK);
-	Serial.println("1a");
-    mylcd.Set_Draw_color(YELLOW);
-	Serial.println("1b");
-    //mylcd.Set_Draw_color(BLACK);
-	Serial.println("1c");
-	//Fill is the problem, but worked before. wtf bitrot is this
-	//attacking the cpp lib hasn't helped. LCDWIKI_KBV.cpp causes glitches when
-	//trying to inspect what it's doing. Either the serial input works or I
-	//see some debugging data, not both. trying to put delays in the cpp
-	//causes corruption of incoming data.
-	//at this point i'm ready to punt this lcd down the garden.
+//	Serial.println("1a");
+//    mylcd.Set_Draw_color(YELLOW);
+//	Serial.println("1b");
+    mylcd.Set_Draw_color(BLACK);
+//	Serial.println("1c");
+
 	mylcd.Fill_Rectangle(sx,sy,ex,ey);  	
-	Serial.println("1d");
-	delay(50);
+//	Serial.println("1d");
+//	delay(50);
     mylcd.Set_Draw_color(YELLOW);
 	mylcd.Draw_Rectangle(sx,sy,ex,ey);  	
-	Serial.println("2");
-	delay(50);
+//	Serial.println("2");
+//	delay(50);
 	mylcd.Set_Text_Size(boxsize);
 	mylcd.Set_Text_colour(YELLOW);
 	mylcd.Print_String(msgstr, sx+4, sy+3);
-	Serial.println("3");
-	delay(50);
-	Serial.println("exit printboxed()");
-	delay(50);
+//	Serial.println("3");
+//	delay(50);
+//	Serial.println("exit printboxed()");
+//	delay(50);
 }
 
 
 void printboxedhighlight(String msgstr, int boxnum, byte boxsize) {
-	int sx = boxdata[boxnum].startx;
-	int sy = boxdata[boxnum].starty;
-	int ex = boxdata[boxnum].endx;
-	int ey = boxdata[boxnum].endy;
+	int sx = boxdata[boxnum].startx+1;
+	int sy = boxdata[boxnum].starty+1;
+	int ex = boxdata[boxnum].endx+1;
+	int ey = boxdata[boxnum].endy+1;
 	mylcd.Set_Text_Back_colour(YELLOW);
     mylcd.Set_Draw_color(YELLOW);
 	mylcd.Fill_Rectangle(sx,sy,ex,ey);  	
@@ -234,14 +246,14 @@ void cmdDefault(int ibox, String sData) {
 	boxdata[ibox].sboxdata = sData.substring(12);
 	//Serial.println(sData.substring(12));
 	Serial.println("<-"+sData+" # "+String(boxdata[ibox].startx)+":"+String(boxdata[ibox].starty)+":"+String(boxdata[ibox].endx)+":"+String(boxdata[ibox].endy)+">"+boxdata[ibox].sboxdata);
-	delay(10);
+//	delay(10);
 }
 
 
 void cmdB() {
-	Serial.println("clr");
+//	Serial.println("clr");
 	mylcd.Fill_Screen(BLACK);
-	delay(250);
+//	delay(250);
 }
 
 
@@ -254,18 +266,18 @@ void cmdC() {
 	 * ex: boxdata[iButton].changed = true;
 	*/
 	Serial.println("refresh");
-	delay(100);
+//	delay(100);
 	for (int ii = 0; ii < boxcount; ii++) {
 		printboxed(boxdata[ii].sboxdata, ii, 4);
-		Serial.println("boxdata: "+boxdata[ii].sboxdata);
-		delay(5); //25
+//		Serial.println("boxdata: "+boxdata[ii].sboxdata);
+//		delay(5); //25
 	}
 }
 
 
 void cmdD() {
 	send_header();
-	delay(50);
+//	delay(50);
 }
 
 
@@ -324,8 +336,8 @@ void get_ser_data() {
 				case 'A': //define how many boxes (can ignore for now)
 					//bData = sData[3];
 					//boxcount = bData.toInt();
-						Serial.println("configurator [boxes]: "+String(boxcount));
-						Serial.println("sData: "+sData);
+//						Serial.println("configurator [boxes]: "+String(boxcount));
+//						Serial.println("sData: "+sData);
 
 					break;
 				case 'B': //clear screen
@@ -387,7 +399,7 @@ void CheckButtonPress() {
 			/**
 			 * TODO: remove this delay, find another way.
 			*/
-			delay(200); //remove this, modify below to compensate
+//			delay(200); //remove this, modify below to compensate
 
 			printboxed(boxdata[pressed].sboxdata, pressed, 4);
 		}
@@ -402,15 +414,15 @@ void CheckButtonPress() {
 void loop() {
 	if (firsttime) {
 		//setdisp(); //only used when testing
-		Serial.println("ft");
-		delay(5);
+//		Serial.println("ft");
+//		delay(5);
 		send_header();
 		firsttime = false;
 	}
 	if (debounce != -1) {
 		debounce++;
 	}
-	if (debounce > 100) { //100-150 if delay(10)
+	if (debounce > 150) { //100-150 if delay(10)
 		debounce=-1;
 		//printboxed(boxmsg[pressed], pressed, 4);
 		lastpressed = -1;
