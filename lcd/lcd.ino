@@ -54,7 +54,7 @@ typedef struct s_boxdef {
 	int endy;
 	String sboxdata; //text to display in box, technically not needed as boxdata has that, but legacy code
 };
-
+//for some reason using #define for these values causes the compilation to fail
 int spacing = 10; //space between boxes
 int boxheight = 50; //height of boxes, width is currently fixed at 320
 int ey1 = boxheight; //yup, i'm this lazy
