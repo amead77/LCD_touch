@@ -203,7 +203,7 @@ void CheckButtonPress() {
 		pressed=boxnum(p.x, p.y);
 		if (pressed != lastpressed) {
 			if (debounce > -1) {
-				printboxed(boxno[lastpressed].sboxdata, lastpressed, 4);
+				//printboxed(boxno[lastpressed].sboxdata, lastpressed, 4);
 			}
 			debounce = 0;
 			lastpressed = pressed;
@@ -219,7 +219,7 @@ void CheckButtonPress() {
 			/**
 			 * TODO: remove this delay, find another way.
 			*/
-			delay(10); //remove this, modify below to compensate
+			delay(50); //remove this, modify below to compensate
 
 			printboxed(boxno[pressed].sboxdata, pressed, 4);
 		}
