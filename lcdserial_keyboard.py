@@ -141,10 +141,10 @@ def get_args():
     
     #override for vscode
     #sPort = '/dev/ttyACM0'
-    sPort = 'COM6'
-    #if args.port=='': ExitProgram('\nNo port given, use --port')
-    #sPort = args.port
-    #print(f'PORT: {args.port}')
+    #sPort = 'COM6'
+    if args.port=='': ExitProgram('\nNo port given, use --port')
+    sPort = args.port
+    print(f'PORT: {args.port}')
 
 
 def sendtime():
