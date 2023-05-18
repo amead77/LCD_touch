@@ -287,8 +287,8 @@ def main():
     buildpages()
 
     while True:
-        sendtime()
-        sendpage()
+        #sendtime()
+        #sendpage()
         CheckDataRecv()
     ExitProgram("bye.")
 

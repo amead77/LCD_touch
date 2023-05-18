@@ -68,9 +68,11 @@ int ey6 = boxheight*6+spacing*5;
 int ey7 = boxheight*7+spacing*6;
 int ey8 = boxheight*8+spacing*7;
 
-s_boxdef boxno[8] = {{1,1,319, ey1, "one"}, {1,ey1+spacing,319, ey2, "two"}, {1,ey2+spacing,319, ey3, "three"}, 
-{1,ey3+spacing,319, ey4, "four"},{1,ey4+spacing,319, ey5, "five"}, {1,ey5+spacing,319, ey6, "six"}, 
-{1,ey6+spacing,319, ey7, "seven"}, {1,ey7+spacing,319, ey8, "eight"}};
+String boxdata[8] = {"one", "two", "three", "four", "five", "six", "seven", "eight"};
+
+s_boxdef boxno[8] = {{1,1,319, ey1, boxdata[1]}, {1,ey1+spacing,319, ey2, boxdata[2]}, {1,ey2+spacing,319, ey3,boxdata[3]}, 
+{1,ey3+spacing,319, ey4, boxdata[4]},{1,ey4+spacing,319, ey5, boxdata[5]}, {1,ey5+spacing,319, ey6, boxdata[6]}, 
+{1,ey6+spacing,319, ey7, boxdata[7]}, {1,ey7+spacing,319, ey8, boxdata[8]}};
 
 int boxcount = -1;
 int debounce = 0;
