@@ -54,11 +54,11 @@ typedef struct s_boxdef {
 	int starty;
 	int endx;
 	int endy;
-	String sboxdata;
+	String sboxdata; //text to display in box, technically not needed as boxdata has that, but legacy code
 };
 
-int spacing = 10;
-int boxheight = 50;
+int spacing = 10; //space between boxes
+int boxheight = 50; //height of boxes, width is currently fixed at 320
 int ey1 = boxheight; //yup, i'm this lazy
 int ey2 = boxheight*2+spacing;
 int ey3 = boxheight*3+spacing*2;
@@ -68,21 +68,27 @@ int ey6 = boxheight*6+spacing*5;
 int ey7 = boxheight*7+spacing*6;
 int ey8 = boxheight*8+spacing*7;
 
-String boxdata[8] = {"one", "two", "three", "four", "five", "six", "seven", "eight"};
+String boxdata[8] = {"Page Up", "Page Down", "three", "four", "five", "six", "seven", "eight"};
 
-s_boxdef boxno[8] = {{1,1,319, ey1, boxdata[1]}, {1,ey1+spacing,319, ey2, boxdata[2]}, {1,ey2+spacing,319, ey3,boxdata[3]}, 
-{1,ey3+spacing,319, ey4, boxdata[4]},{1,ey4+spacing,319, ey5, boxdata[5]}, {1,ey5+spacing,319, ey6, boxdata[6]}, 
-{1,ey6+spacing,319, ey7, boxdata[7]}, {1,ey7+spacing,319, ey8, boxdata[8]}};
+s_boxdef boxno[8] = {{1,1,319, ey1, boxdata[0]}, {1,ey1+spacing,319, ey2, boxdata[1]}, {1,ey2+spacing,319, ey3,boxdata[2]}, 
+{1,ey3+spacing,319, ey4, boxdata[3]},{1,ey4+spacing,319, ey5, boxdata[4]}, {1,ey5+spacing,319, ey6, boxdata[5]}, 
+{1,ey6+spacing,319, ey7, boxdata[6]}, {1,ey7+spacing,319, ey8, boxdata[7]}};
 
-int boxcount = -1;
+//int boxcount = -1;
+
+//these are part of the debounce code
 int debounce = 0;
 int lastpressed = -1;
 int pressed = -1;
 bool sendit = false;
-bool firsttime = true;
-bool refresh = false;
-int numboxes = 7;
 
+
+bool firsttime = true;
+//bool refresh = false;
+
+int numboxes = 7; //number of onscreen boxes
+int textoffsetx = 10; //offset from box edge
+int textoffsety = 10;
 
 void setup() {
 	Serial.begin(57600); //115200 was causing corruption, slower wasn't really fast enough
@@ -113,7 +119,7 @@ void printboxed(String msgstr, int boxnum, byte boxsize) {
 	mylcd.Draw_Rectangle(sx,sy,ex,ey);  	
 	mylcd.Set_Text_Size(boxsize);
 	mylcd.Set_Text_colour(YELLOW);
-	mylcd.Print_String(msgstr, sx+4, sy+3);
+	mylcd.Print_String(msgstr, sx+textoffsetx, sy+textoffsety);
 }
 
 void printboxedhighlight(String msgstr, int boxnum, byte boxsize) {
@@ -126,13 +132,15 @@ void printboxedhighlight(String msgstr, int boxnum, byte boxsize) {
 	mylcd.Fill_Rectangle(sx,sy,ex,ey);  	
 	mylcd.Set_Text_Size(boxsize);
 	mylcd.Set_Text_colour(BLACK);
-	mylcd.Print_String(msgstr, sx+4, sy+3);
+	mylcd.Print_String(msgstr, sx+textoffsetx, sy+textoffsety);
 }
 
 String leadingzero(byte tx) {
 /**
  * returns a string from byte tx, if 0..9, includes a leading zero.
  */
+	return (tx < 10) ? "0" + String(tx) : String(tx);
+/*
 	String lz="0";
 	if (tx < 10) {
 		lz+=String(tx);
@@ -141,6 +149,7 @@ String leadingzero(byte tx) {
 		lz=String(tx);
 	}
 	return lz;
+*/
 }
 
 
@@ -198,7 +207,9 @@ void CheckButtonPress() {
 			}
 			debounce = 0;
 			lastpressed = pressed;
-			sendit = true;
+			if (pressed >= 0 && pressed <= numboxes) {
+				sendit = true;
+			}
 		}
 		if (sendit) {
 			//printboxed(String(pressed), 5, 4);
@@ -208,7 +219,7 @@ void CheckButtonPress() {
 			/**
 			 * TODO: remove this delay, find another way.
 			*/
-			//delay(1); //remove this, modify below to compensate
+			delay(10); //remove this, modify below to compensate
 
 			printboxed(boxno[pressed].sboxdata, pressed, 4);
 		}

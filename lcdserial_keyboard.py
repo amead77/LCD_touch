@@ -197,10 +197,17 @@ def CheckDataRecv():
         sData = sData[0:4]
         match sData:
             case "B*00":
-                now = datetime.now()
-                dt_string = now.strftime("%H:%M")
-                pyautogui.write(dt_string, interval=0.05)
+                #now = datetime.now()
+                #dt_string = now.strftime("%H:%M")
+                #pyautogui.write(dt_string, interval=0.05)
+                pyautogui.keyDown('pageup')
+                pyautogui.keyUp('pageup')
+                
                 pass
+
+            case "B*01":
+                pyautogui.keyDown('pagedown')
+                pyautogui.keyUp('pagedown')
             case _:
                 pass
         if sData[2].isnumeric():
