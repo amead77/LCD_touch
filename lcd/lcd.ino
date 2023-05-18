@@ -66,9 +66,9 @@ int ey6 = boxheight*6+spacing*5;
 int ey7 = boxheight*7+spacing*6;
 int ey8 = boxheight*8+spacing*7;
 
-int pages = 1; //number of pages of boxes
-int currentpage = 1; //current page of boxes
-
+//pages won't be needed, return to mod-lcd like get serial data
+//boxdata should be set from python, but for now it's hardcoded,
+//and the boxno array is hardcoded too.
 String boxdata[8] = {"Page Up", "Page Down", "three", "four", "five", "six", "seven", "eight"};
 
 s_boxdef boxno[8] = {{1,1,319, ey1, boxdata[0]}, {1,ey1+spacing,319, ey2, boxdata[1]}, {1,ey2+spacing,319, ey3,boxdata[2]}, 
@@ -137,17 +137,13 @@ void printboxedhighlight(String msgstr, int boxnum, byte boxsize) {
 }
 
 String leadingzero(byte tx) {
-/**
- * returns a string from byte tx, if 0..9, includes a leading zero.
- */
+// returns a string from byte tx, if 0..9, includes a leading zero.
 	return (tx < 10) ? "0" + String(tx) : String(tx);
 }
 
 
 void dispcoord(int xx, int yy) {
-/**
- * used in debugging, prints xx,yy at location
-*/
+// used in debugging, prints xx,yy at location
 	mylcd.Set_Text_colour(GREEN);
 	mylcd.Print_Number_Int(xx, 0, 200, 3, ' ',10);
 	mylcd.Print_Number_Int(yy, 0, 220, 3, ' ',10);
@@ -155,9 +151,7 @@ void dispcoord(int xx, int yy) {
 
 
 int boxnum(int px, int py) {
-/**
- * maps x,y co-ords to onscreen box
-*/
+// maps x,y co-ords to onscreen box
 	String buildstr;
 	for (int bx=0; bx <= numboxes; bx++) {
 		buildstr=">"+String(bx);
@@ -172,9 +166,8 @@ int boxnum(int px, int py) {
 
 
 void CheckButtonPress() {
-/**
- * check for LCD press, map to xy coords. if match box pos, highlight box
- */
+// check for LCD press, map to xy coords. if match box pos, highlight box
+
 	sendit = false;
 	//*******************************************************************************
 	//-------here
@@ -225,6 +218,24 @@ void RefreshScreen() {
 	}
 }
 
+void GetSerialData() {
+// get serial data, parse it, update screen
+
+// check this, 100% copilot code
+	if (Serial.available() > 0) {
+		String serialdata = Serial.readStringUntil('\n');
+		//Serial.println(serialdata);
+		int startpos = serialdata.indexOf("*");
+		int endpos = serialdata.indexOf("$");
+		if (startpos > -1 && endpos > -1) {
+			String boxnumstr = serialdata.substring(startpos+1, endpos);
+			String boxdatastr = serialdata.substring(endpos+1);
+			int boxnum = boxnumstr.toInt();
+			boxno[boxnum].sboxdata = boxdatastr;
+			printboxed(boxno[boxnum].sboxdata, boxnum, 4);
+		}
+	}
+}
 
 //###############################################################################
 //# main
