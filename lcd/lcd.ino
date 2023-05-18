@@ -57,12 +57,20 @@ typedef struct s_boxdef {
 	String sboxdata;
 };
 
+int spacing = 10;
+int boxheight = 50;
+int ey1 = boxheight; //yup, i'm this lazy
+int ey2 = boxheight*2+spacing;
+int ey3 = boxheight*3+spacing*2;
+int ey4 = boxheight*4+spacing*3;
+int ey5 = boxheight*5+spacing*4;
+int ey6 = boxheight*6+spacing*5;
+int ey7 = boxheight*7+spacing*6;
+int ey8 = boxheight*8+spacing*7;
 
-s_boxdef boxno[8] = {{1,1,319, 45, "one"}, {1,47,319, 92, "two"}, {1,94,319, 139, "three"}, {1,141,319, 186, "four"}, 
-{1,188,319, 233, "five"}, {1,235,319, 280, "six"}, {1,282,319, 327, "seven"}, {1,329,319, 374, "eight"}};
-//String boxmsg[6] = {"TEST 00", "TEST 01", "TEST 02", "TEST 03", "TEST 04", "TEST 05", "TEST 06"};
-//s_boxdef timeplace = {1,1,319,45};
-
+s_boxdef boxno[8] = {{1,1,319, ey1, "one"}, {1,ey1+spacing,319, ey2, "two"}, {1,ey2+spacing,319, ey3, "three"}, 
+{1,ey3+spacing,319, ey4, "four"},{1,ey4+spacing,319, ey5, "five"}, {1,ey5+spacing,319, ey6, "six"}, 
+{1,ey6+spacing,319, ey7, "seven"}, {1,ey7+spacing,319, ey8, "eight"}};
 
 int boxcount = -1;
 int debounce = 0;
@@ -166,6 +174,7 @@ void CheckButtonPress() {
  * check for LCD press, map to xy coords. if match box pos, highlight box
  */
 	sendit = false;
+	//*******************************************************************************
 	//-------here
 	digitalWrite(13, HIGH);
 	TSPoint p = ts.getPoint();
@@ -174,6 +183,7 @@ void CheckButtonPress() {
 	pinMode(YP, OUTPUT);
 	//-------to here, MUST be in this order. do not move pinMode() out to setup()
 	// something resets it and the screen stops working properly.
+	//*******************************************************************************
 	if (p.z > MINPRESSURE && p.z < MAXPRESSURE) {
 		p.x = map(p.x, TS_MINX, TS_MAXX, mylcd.Get_Display_Width(), 0);
 		p.y = map(p.y, TS_MINY, TS_MAXY, mylcd.Get_Display_Height(),0);
@@ -196,7 +206,7 @@ void CheckButtonPress() {
 			/**
 			 * TODO: remove this delay, find another way.
 			*/
-			delay(200); //remove this, modify below to compensate
+			//delay(1); //remove this, modify below to compensate
 
 			printboxed(boxno[pressed].sboxdata, pressed, 4);
 		}
@@ -216,7 +226,6 @@ void RefreshScreen() {
 //###############################################################################
 void loop() {
 	if (firsttime) {
-		//setdisp(); //only used when testing
 		pinMode(XM, OUTPUT);
 		pinMode(YP, OUTPUT);
 		firsttime = false;
@@ -225,18 +234,14 @@ void loop() {
 	if (debounce != -1) {
 		debounce++;
 	}
-	if (debounce > 100) { //100-150 if delay(10)
+	if (debounce > 50) { //100-150 if delay(10)
 		debounce=-1;
 		//printboxed(boxmsg[pressed], pressed, 4);
 		lastpressed = -1;
-	}
-	
-//	if (Serial.available() > 0) {
-//		get_ser_data();
-//	}  
+	} 
 	
 	CheckButtonPress(); //refactored from here out to function
 
-	delay(10); //no delay causes no data to be received over serial?!?!
+	delay(5); //no delay causes no data to be received over serial?!?!
 
 }

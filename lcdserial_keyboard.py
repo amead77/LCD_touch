@@ -120,7 +120,8 @@ def listports():
         sTstr = "{0}".format(info)
         lPortlist.append(sTstr.split()[0])
     if len(lPortlist) < 1:
-        ExitProgram("\nNo ports available")
+        print("\nNo ports available, but continuing anyway")
+        #ExitProgram("\nNo ports available")
     for iIter in range(len(lPortlist)):
         print(f"{iIter}:", lPortlist[iIter])
 
@@ -139,8 +140,8 @@ def get_args():
     args = parser.parse_args()
     
     #override for vscode
-    sPort = '/dev/ttyACM0'
-
+    #sPort = '/dev/ttyACM0'
+    sPort = 'COM6'
     #if args.port=='': ExitProgram('\nNo port given, use --port')
     #sPort = args.port
     #print(f'PORT: {args.port}')
