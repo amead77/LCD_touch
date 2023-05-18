@@ -9,8 +9,6 @@
 # Python receives that data then decides what to do with it.
 #
 2023-05-18: removed a lot of code, shrinking back down to basic level that was previously working.
-TODO:
--implement checksum on received data / line ~227
 
 ####################################################*/
 
@@ -112,7 +110,7 @@ void printboxed(String msgstr, int boxnum, byte boxsize) {
 	int ey = boxno[boxnum].endy;
 //	int msglen = msgstr.length() * 13;
 	mylcd.Set_Text_Back_colour(BLACK);
-    mylcd.Set_Draw_color(YELLOW);
+    //mylcd.Set_Draw_color(YELLOW);
     mylcd.Set_Draw_color(BLACK);
 	mylcd.Fill_Rectangle(sx,sy,ex,ey);  	
     mylcd.Set_Draw_color(YELLOW);
@@ -140,16 +138,6 @@ String leadingzero(byte tx) {
  * returns a string from byte tx, if 0..9, includes a leading zero.
  */
 	return (tx < 10) ? "0" + String(tx) : String(tx);
-/*
-	String lz="0";
-	if (tx < 10) {
-		lz+=String(tx);
-	} else
-	{
-		lz=String(tx);
-	}
-	return lz;
-*/
 }
 
 
@@ -207,9 +195,10 @@ void CheckButtonPress() {
 			}
 			debounce = 0;
 			lastpressed = pressed;
-			if (pressed >= 0 && pressed <= numboxes) {
-				sendit = true;
-			}
+			sendit = (pressed >= 0 && pressed <= numboxes) ? true : false;
+			//if (pressed >= 0 && pressed <= numboxes) {
+			//	sendit = true;
+			//}
 		}
 		if (sendit) {
 			//printboxed(String(pressed), 5, 4);
@@ -239,14 +228,17 @@ void RefreshScreen() {
 //###############################################################################
 void loop() {
 	if (firsttime) {
+		//this is here instead of setup() because reasons.
 		pinMode(XM, OUTPUT);
 		pinMode(YP, OUTPUT);
 		firsttime = false;
 		RefreshScreen();
 	}
-	if (debounce != -1) {
-		debounce++;
-	}
+
+	debounce = (debounce != -1) ? debounce++ : debounce;
+//	if (debounce != -1) {
+//		debounce++;
+//	}
 	if (debounce > 50) { //100-150 if delay(10)
 		debounce=-1;
 		//printboxed(boxmsg[pressed], pressed, 4);
