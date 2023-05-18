@@ -66,6 +66,9 @@ int ey6 = boxheight*6+spacing*5;
 int ey7 = boxheight*7+spacing*6;
 int ey8 = boxheight*8+spacing*7;
 
+int pages = 1; //number of pages of boxes
+int currentpage = 1; //current page of boxes
+
 String boxdata[8] = {"Page Up", "Page Down", "three", "four", "five", "six", "seven", "eight"};
 
 s_boxdef boxno[8] = {{1,1,319, ey1, boxdata[0]}, {1,ey1+spacing,319, ey2, boxdata[1]}, {1,ey2+spacing,319, ey3,boxdata[2]}, 
