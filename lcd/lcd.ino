@@ -242,7 +242,7 @@ void GetSerialData() {
 //###############################################################################
 void loop() {
 	if (firsttime) {
-		//this is here instead of setup() because reasons.
+		//this is here instead of setup() because, reasons.
 		pinMode(XM, OUTPUT);
 		pinMode(YP, OUTPUT);
 		firsttime = false;

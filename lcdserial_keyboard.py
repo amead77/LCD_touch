@@ -32,9 +32,9 @@ import time
 import glob
 import os
 from sys import exit
-#from serial.tools import list_ports_common #now uses m_serialstuff
+from serial.tools import list_ports_common #now uses m_serialstuff
 import argparse #used for argparser
-import m_serialstuff #modified version of code from serial.tools.list_ports_common
+#import m_serialstuff #modified version of code from serial.tools.list_ports_common
 #from sshkeyboard import listen_keyboard, stop_listening
 #sshkeyboard is no good for this, is blocking while waiting a key
 
@@ -115,7 +115,8 @@ def listports():
     global lPortlist
     lPortlist = []
     print("available ports below:")
-    for info in sorted(m_serialstuff.comports()):
+    #for info in sorted(m_serialstuff.comports()):
+    for info in sorted(list_ports_common.comports()):
         #print("{0}: {0.subsystem}".format(info))
         sTstr = "{0}".format(info)
         lPortlist.append(sTstr.split()[0])
